@@ -1,0 +1,302 @@
+Toolbar {
+    align-items: center;
+    background-color: var(--unity-colors-default-background);
+    height: 24px;
+}
+
+Toolbar > Label {
+    -unity-text-align: middle-center;
+    padding-left: 4px;
+}
+
+Toolbar ToolbarMenu {
+    border-left-width: 0;
+    border-right-width: 0;
+    border-top-width: 0;
+    border-bottom-width: 0;
+    padding-right: 1px;
+    padding-left: 1px;
+    margin-top: 0;
+    margin-bottom: 0;
+    margin-right: 2px;
+    border-top-left-radius: var(--unity-metrics-default-border_radius);
+    border-top-right-radius: var(--unity-metrics-default-border_radius);
+    border-bottom-right-radius: var(--unity-metrics-default-border_radius);
+    border-bottom-left-radius: var(--unity-metrics-default-border_radius);
+    margin-left: 4px;
+    padding-top: 1px;
+    padding-bottom: 1px;
+    background-color: var(--unity-colors-default-background);
+}
+
+Toolbar ToolbarMenu:enabled:hover {
+    border-left-width: 0;
+    border-right-width: 0;
+    border-top-width: 0;
+    border-bottom-width: 0;
+    padding-right: 1px;
+    padding-left: 1px;
+    margin-top: 0;
+    margin-bottom: 0;
+    margin-right: 2px;
+    border-top-left-radius: var(--unity-metrics-default-border_radius);
+    border-top-right-radius: var(--unity-metrics-default-border_radius);
+    border-bottom-right-radius: var(--unity-metrics-default-border_radius);
+    border-bottom-left-radius: var(--unity-metrics-default-border_radius);
+    margin-left: 4px;
+    padding-top: 1px;
+    padding-bottom: 1px;
+    background-color: var(--unity-colors-dropdown-background-hover);
+}
+
+Toolbar ToolbarMenu .unity-toolbar-menu__arrow {
+    width: 14px;
+    height: 14px;
+}
+
+#getting-started {
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: 0;
+    position: absolute;
+    align-items: center;
+    justify-content: center;
+    -unity-text-align: upper-center;
+}
+
+#getting-started .background {
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: 0;
+    position: absolute;
+    background-color: var(--unity-colors-default-background);
+    opacity: 0.8;
+}
+
+.window {
+    background-color: var(--unity-colors-window-background);
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+    border-bottom-left-radius: 3px;
+    border-bottom-color: var(--unity-colors-default-border);
+    border-right-color: var(--unity-colors-default-border);
+    border-top-color: var(--unity-colors-default-border);
+    border-left-color: var(--unity-colors-default-border);
+}
+
+SplitView #prefabs-view_pane {
+    overflow: hidden;
+    align-items: flex-end;
+    min-width: 50%;
+}
+
+SplitView #fixed-pane {
+    flex-direction: column;
+    min-width: 180px;
+    overflow: visible;
+}
+
+#library-pane {
+    height: 200px;
+    min-height: 16px;
+}
+
+.inspector-view {
+    width: 100%;
+    min-width: 150px;
+    height: 100%;
+    min-height: 24px;
+    overflow: hidden;
+}
+
+.inspector-view .inspector-view_content__scroll {
+    min-height: 24px;
+}
+
+.inspector-view .inspector-view_content {
+    flex-direction: row;
+    align-items: stretch;
+    flex-wrap: wrap;
+}
+
+.inspector-view .inspector-view_content > .info {
+    flex-grow: 1;
+    width: 150px;
+    padding-top: 2px;
+    padding-right: 2px;
+    padding-bottom: 2px;
+    padding-left: 2px;
+}
+
+.inspector-view .inspector-view_content__image {
+    padding-left: 4px;
+    padding-right: 4px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    flex-grow: 1;
+    height: 130px;
+    width: 120px;
+    align-self: flex-start;
+    margin-right: auto;
+    margin-left: auto;
+    max-width: 200px;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.inspector-view .inspector-view_content__image > Image {
+    background-color: var(--unity-colors-preview-background);
+    border-bottom-color: var(--unity-colors-preview-border);
+    border-bottom-width: 1px;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-left-width: 1px;
+    border-left-color: var(--unity-colors-preview-border);
+    border-right-color: var(--unity-colors-preview-border);
+    border-top-color: var(--unity-colors-preview-border);
+    width: 100%;
+    height: 100%;
+    border-top-left-radius: var(--unity-metrics-default-border_radius);
+    border-top-right-radius: var(--unity-metrics-default-border_radius);
+    border-bottom-right-radius: var(--unity-metrics-default-border_radius);
+    border-bottom-left-radius: var(--unity-metrics-default-border_radius);
+}
+
+.inspector-view .inspector-view_content__title {
+    -unity-text-align: upper-center;
+    white-space: pre-wrap;
+    margin-bottom: 4px;
+}
+
+.inspector-view .inspector-view_content__tags {
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding-left: 2px;
+}
+
+.inspector-view .inspector-view_content__tags > .prefab-tag {
+    margin-right: 2px;
+    margin-top: 2px;
+    margin-left: 2px;
+    border-radius: var(--unity-metrics-default-border_radius);
+    border-color: rgba(255, 255, 255, 0.1);
+    border-width: 1px;
+    font-size: var(--unity-metrics-default-font_semi_small_size);
+    -unity-text-align: middle-center;
+    align-items: center;
+    margin-bottom: 2px;
+    flex-grow: 0;
+    flex-direction: row;
+    height: var(--unity-metrics-single_line-height);
+}
+
+.inspector-view .inspector-view_content__tags > .prefab-tag > Label {
+    padding-left: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-shrink: 1;
+}
+
+.inspector-view .inspector-view_content__tags > .prefab-tag > Button {
+    padding: 0;
+    margin-left: 0;
+    margin-right: -1px;
+    margin-top: 0;
+    margin-bottom: 0;
+    border-width: 1px;
+    background-color: transparent;
+    border-color: transparent;
+    -unity-text-align: middle-center;
+    padding-bottom: 1.5px;
+    width: var(--unity-metrics-single_line-height);
+    height: var(--unity-metrics-single_line-height);
+    border-top-right-radius: var(--unity-metrics-default-border_radius);
+    border-bottom-right-radius: var(--unity-metrics-default-border_radius);
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    opacity: 0.6;
+}
+
+.inspector-view .inspector-view_content__tags > .prefab-tag:hover > Button {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.inspector-view .inspector-view_content__tags > .prefab-tag > Button:enabled:hover {
+    opacity: 1;
+}
+
+.inspector-view .inspector-view_content__tags > .prefab-tag > Button:enabled:active {
+    border-color: var(--unity-colors-default-text);
+    background-color: rgba(255, 255, 255, 0.39);
+}
+
+.inspector-view_content__tag-field {
+    margin-bottom: 2px;
+    overflow: hidden;
+}
+
+.inspector-view_content__tag-field .unity-base-field__label {
+    margin-right: 4px;
+    min-height: auto;
+    width: auto;
+    min-width: 46px;
+}
+
+.inspector-view_content__tag-field .unity-base-field__input {
+    -unity-text-align: middle-left;
+    -unity-font-style: italic;
+    flex-basis: auto;
+    min-width: 67px;
+    overflow: hidden;
+    padding-right: 18px;
+    flex-grow: 1;
+}
+
+.inspector-view_content__tag-field Button {
+    overflow: hidden;
+    -unity-text-align: middle-center;
+    position: absolute;
+    right: 0;
+    height: 100%;
+    padding-bottom: 2px;
+    border-bottom-left-radius: 0;
+    border-top-left-radius: 0;
+    min-width: 18px;
+    border-top-color: var(--unity-colors-input_field-border_accent);
+    margin-left: 0;
+    margin-right: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    border-bottom-color: var(--unity-colors-input_field-border);
+    border-right-color: var(--unity-colors-input_field-border);
+    border-left-color: var(--unity-colors-button-border);
+}
+
+.inspector-view_content__tag-field:enabled:hover Button {
+    border-top-color: var(--unity-colors-input_field-border-hover);
+    border-right-color: var(--unity-colors-input_field-border-hover);
+    border-bottom-color: var(--unity-colors-input_field-border-hover);
+}
+
+.inspector-view_content__tag-field:enabled:focus Button {
+    border-top-color: var(--unity-colors-input_field-border-focus);
+    border-right-color: var(--unity-colors-input_field-border-focus);
+    border-bottom-color: var(--unity-colors-input_field-border-focus);
+}
+
+
+
+
+
+
+
+
+
+

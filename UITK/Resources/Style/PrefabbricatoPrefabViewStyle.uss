@@ -1,0 +1,10 @@
+.prefab-view {
+    min-width: 150px;
+    flex-grow: 1;
+    width: 100%;
+}
+
+.prefab-view > .unity-scroll-view {
+    flex-grow: 1;
+    background-color: var(--unity-colors-box-background);
+}
