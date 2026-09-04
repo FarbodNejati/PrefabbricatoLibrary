@@ -15,7 +15,7 @@ namespace Farbod.Prefabbricato
         /// </summary>
         internal static string LibraryPath { get; private set; } = string.Empty;
 
-        internal static event Action OnRootChange;
+        internal static event Action onLibraryChange;
 
         [InitializeOnLoadMethod]
         static void LoadSavedData()
@@ -24,9 +24,9 @@ namespace Farbod.Prefabbricato
         }
 
         /// <summary>
-        /// Is the library directory set up and selected.
+        /// Is the library directory set up, and valid?
         /// </summary>
-        internal static bool IsSetUp()
+        internal static bool IsLibrarySetUp()
         {
             /// Check if root is assigned
             if (string.IsNullOrEmpty(LibraryPath))
@@ -48,6 +48,7 @@ namespace Farbod.Prefabbricato
         /// <returns>Success Result</returns>
         internal static bool SelectLibraryDirectory()
         {
+            string pathBefore = LibraryPath;
             //Start at selected folder (if inside project)
             string startingPath = AssetDatabase.IsValidFolder(LibraryPath) ? LibraryPath : PROJECT_ASSET_PATH;
 
@@ -58,7 +59,7 @@ namespace Farbod.Prefabbricato
             if(string.IsNullOrEmpty(folderPath))
                 return false;
 
-
+            
             //Validation check
             while (!IsProjectPathValidForLibrary(FileUtil.GetProjectRelativePath(folderPath))) //Re open selection panel
             {
@@ -78,7 +79,10 @@ namespace Farbod.Prefabbricato
             //Finally, set path.
             LibraryPath = FileUtil.GetProjectRelativePath(folderPath);
             EditorDataManager.SaveLibraryPath(LibraryPath);
-            OnRootChange?.Invoke();
+
+            if (pathBefore!= LibraryPath)
+                onLibraryChange?.Invoke(); //only invoke if path has truly changed
+
             return true;
         }
         

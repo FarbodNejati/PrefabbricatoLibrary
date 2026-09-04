@@ -1,9 +1,16 @@
-﻿using UnityEngine.UIElements;
+﻿using UnityEditor;
+using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace Farbod.Prefabbricato
 {
-    public static class TabViewExtensions
+    public static class UIExtensions
     {
+        public static UnityEngine.UIElements.Background GetEditorIcon(string name)
+        {
+            Texture2D icon = (Texture2D)EditorGUIUtility.IconContent(name).image;
+            return Background.FromTexture2D(icon);
+        }
         /// <summary>
         /// This adds the appropriate class names to a tab view's headers
         /// to make them look like a button group.

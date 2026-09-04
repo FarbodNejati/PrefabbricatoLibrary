@@ -8,3 +8,9 @@
     flex-grow: 1;
     background-color: var(--unity-colors-box-background);
 }
+
+.unity-toolbar-search-field {
+    flex-shrink: 1;
+    max-width: 60%;
+    width: 290px;
+}

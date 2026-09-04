@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using static UnityEngine.Analytics.IAnalytic;
@@ -108,28 +109,9 @@ namespace Farbod.Prefabbricato
         ///------------  USER DATA / PREFS  -------------
         ///----------------------------------------------
 
-        [System.Serializable]
-        public class UserData
-        {
-            public string libraryPath;
-            public List<LabelData> labelUserData = new();
-        }
-        [System.Serializable]
-        public class LabelData
-        {
-            public string name; //The name of this asset label
-            public Color? color; //The color assigned by the user to this label
-            public int latestCount;
-
-            public LabelData(string name, Color? color, int latestCount=0)
-            {
-                this.name = name;
-                this.color = color;
-                this.latestCount = latestCount;
-            }
-        }
 
 
+        internal static event Action onTagColorsChange;
         private static UserData cachedData;
         // Load data (with caching for performance)
         private static UserData LoadData()
@@ -142,6 +124,10 @@ namespace Farbod.Prefabbricato
                 var json = File.ReadAllText(USER_DATA_PATH);
                 cachedData = JsonUtility.FromJson<UserData>(json);
 
+                if(cachedData?.labelUserData != null)
+                {
+                    cachedData.labelUserData.ForEach(item => { item.DeserializeColorField(); });
+                }
                 // Ensure labelUserData is not null
                 if (cachedData?.labelUserData == null)
                     cachedData.labelUserData = new List<LabelData>();
@@ -165,6 +151,7 @@ namespace Farbod.Prefabbricato
             if (cachedData == null)
                 return;
 
+            cachedData.labelUserData.ForEach(item => { item.SerializeColorField(); });
             var json = JsonUtility.ToJson(cachedData, true);
             File.WriteAllText(USER_DATA_PATH, json);
             AssetDatabase.Refresh();
@@ -186,40 +173,68 @@ namespace Farbod.Prefabbricato
         }
 
         // Public method to add/update a label color
-        public static void SaveLabelColor(string labelName, Color color)
+        //public static void SaveLabelColor(string labelName, Color? color)
+        //{
+        //    var data = LoadData();
+
+        //    // Find existing entry
+        //    // If new color is null, remove 
+        //    var existing = data.labelUserData.Find(x => x.name == labelName);
+        //    if (existing != null)
+        //    {
+        //        if (color.HasValue)
+        //            existing.color = color;
+        //        else
+        //            data.labelUserData.Remove(existing);
+        //    }
+        //    //If not an existing key, then only save if we have a value
+        //    else if(color.HasValue)
+        //    {
+        //            data.labelUserData.Add(new LabelData(labelName,color));
+        //    }
+
+        //    onTagColorsChange?.Invoke();
+        //    SaveData();
+        //}
+
+        public static void SaTLabelColors(Dictionary<string, Color?> newLabels)
         {
             var data = LoadData();
-
-            // Find existing entry
-            var existing = data.labelUserData.Find(x => x.name == labelName);
-            if (existing != null)
+            foreach (var label in newLabels)
             {
-                existing.color = color;
+                var existing = data.labelUserData.Find(x => x.name == label.Key);
+                Color? color = label.Value;
+                if (existing != null)
+                {
+                    if (color.HasValue)
+                        existing.color = color.Value;
+                    else
+                        data.labelUserData.Remove(existing);
+                }
+                else if (color.HasValue)
+                {
+                    data.labelUserData.Add(new LabelData(label.Key, color.Value));
+                }
             }
-            else
-            {
-                data.labelUserData.Add(new LabelData(labelName,color));
-            }
-
             SaveData();
+            onTagColorsChange?.Invoke();
         }
-
         // Public method to get color for a label
-        public static Color GetLabelColor(string labelName)
+        public static Color? GetLabelColor(string labelName)
         {
             var data = LoadData();
             var entry = data.labelUserData.Find(x => x.name == labelName);
-            return entry?.color ?? Color.white; // Default color if not found
+            return entry?.color; // Default color if not found
         }
 
         // Public method to get all label colors as a dictionary
-        public static Dictionary<string, Color?> GetAllLabelColors()
+        public static Dictionary<string, Color> GetAllAssignedLabelColors()
         {
             var data = LoadData();
-            var result = new Dictionary<string, Color?>();
-            foreach (var entry in data.labelUserData)
+            var result = new Dictionary<string, Color>();
+            foreach (var entry in data.labelUserData.Where(l=>l.color.HasValue))
             {
-                result[entry.name] = entry.color;
+                result[entry.name] = entry.color.Value;
             }
             return result;
         }

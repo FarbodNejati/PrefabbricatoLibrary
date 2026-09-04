@@ -36,12 +36,11 @@ namespace Farbod.Prefabbricato
         private TabView m_TabView;
         private Tab m_ProjectDirTab;
         internal LibraryLabelsView LibraryLabelsView { get; private set; }
-
-
         private DropdownMenu m_ToolbarDropdown;
-
-
         private VisualElement m_ScanWarningPrompt;
+
+        internal event Action onSettingsButtonClick;
+
 #if !UNITY_2023_2_OR_NEWER
         public new class UxmlFactory : UxmlFactory<VisualElement, UxmlTraits> {}
         public new class UxmlTraits : VisualElement.UxmlTraits{}
@@ -83,7 +82,8 @@ namespace Farbod.Prefabbricato
             toolbarMenu.
                 Q(className: ToolbarMenu.arrowUssClassName)
                 .style.backgroundImage =
-                new StyleBackground((Texture2D)EditorGUIUtility.IconContent("_Menu@2x").image);
+                new StyleBackground(UIExtensions.GetEditorIcon("d_Settings@2x"));
+
             m_ToolbarDropdown = toolbarMenu.menu;
             CraeteToolbarMenuOptions(m_ToolbarDropdown);
             toolbar.Add(toolbarMenu);
@@ -99,7 +99,7 @@ namespace Farbod.Prefabbricato
             
             //Warning Image
             var warningImage = new VisualElement();
-            warningImage.style.backgroundImage = new StyleBackground((Texture2D)EditorGUIUtility.IconContent("Warning@2x").image);
+            warningImage.style.backgroundImage = UIExtensions.GetEditorIcon("Warning@2x");
             warningImage.style.height = warningImage.style.width = 16;
             m_ScanWarningPrompt.Add(warningImage);
             //Text
@@ -129,6 +129,8 @@ namespace Farbod.Prefabbricato
         private void CraeteToolbarMenuOptions(DropdownMenu menu)
         {
             menu.AppendAction("Build Index (Scan)", a => AssetIndex.BuildIndex());
+            menu.AppendAction("Settings", a => onSettingsButtonClick?.Invoke());
+
         }
         /// <summary>
         /// Create a tab, with a scroll view inside and a visual element to contain its content
@@ -146,7 +148,6 @@ namespace Farbod.Prefabbricato
             tab.style.flexGrow = 1;
             tab.contentContainer.style.flexGrow = 1;
 
-           
             m_TabView.Add(tab);
             return tab;
         }

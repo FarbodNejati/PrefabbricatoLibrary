@@ -31,7 +31,7 @@ namespace Farbod.Prefabbricato.Backend
         internal static Dictionary<string, HashSet<string>> AssetGUIDToAssetDataIndex { get; private set; } = new();
 
         internal static List<LabelData> Labels { get; private set; } = new();
-        internal static event Action OnIndexUpdate;
+        internal static event Action onIndexUpdate;
 
         [InitializeOnLoadMethod]
         static void LoadIndexData()
@@ -105,14 +105,14 @@ namespace Farbod.Prefabbricato.Backend
             //Results
             IsIndexed = true;
             LastIndexTime = DateTime.Now;
-            OnIndexUpdate?.Invoke();
+            onIndexUpdate?.Invoke();
             SaveIndexData();
             //Debug
             Debug.Log($"[Prefabbricato] Scan completed. Indexed {prefab_guids.Count()} assets and {LabelToAssetIndex.Count()} labels.");
         }
         private static void UpdateLabelsFromIndex()
         {
-            var labelColors = EditorDataManager.GetAllLabelColors();
+            var labelColors = EditorDataManager.GetAllAssignedLabelColors();
             Labels.Clear();
 
             LabelData[] data = new LabelData[LabelToAssetIndex.Count];

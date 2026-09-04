@@ -21,11 +21,11 @@ namespace Farbod.Prefabbricato
         private readonly static float TAG_COLOR_MAX_OPACITY = 0.3f;
 
         internal readonly static string ussClassName = "inspector-view";
-        private readonly static string m_contentUssClassName = "inspector-view_content";
-        private readonly static string m_contentImageUssClassName = "inspector-view_content__image";
-        private readonly static string m_contentTitleUssClassName = "inspector-view_content__title";
-        private readonly static string m_TagContainerUssClassName = "inspector-view_content__tags";
-        private readonly static string m_TagFieldUssClassName = "inspector-view_content__tag-field";
+        private readonly static string m_contentUssClassName = ussClassName+"_content";
+        private readonly static string m_contentImageUssClassName = ussClassName + "_content__image";
+        private readonly static string m_contentTitleUssClassName = ussClassName + "_content__title";
+        private readonly static string m_TagContainerUssClassName = ussClassName + "_content__tags";
+        private readonly static string m_TagFieldUssClassName = ussClassName + "_content__tag-field";
         private readonly static string m_TagUssClassName = "prefab-tag";
 
 
@@ -38,7 +38,10 @@ namespace Farbod.Prefabbricato
         private Button m_AddTagButton;
 
         internal Dictionary<string, VisualElement> activeTags { get; private set; } = new(0);
-        private Action<string[]> OnTagsChange = null;
+        private Action<string[]> onLabelsChange = null;
+        internal event Action<string> onLabelClicked;
+        internal event Action<string, ContextualMenuPopulateEvent> onLabelContextMenu;
+
         public override VisualElement contentContainer => null;
 
 #if !UNITY_2023_2_OR_NEWER
@@ -76,7 +79,7 @@ namespace Farbod.Prefabbricato
             toolbarMenu.
                 Q(className:ToolbarMenu.arrowUssClassName)
                 .style.backgroundImage =
-                new StyleBackground((Texture2D)EditorGUIUtility.IconContent("_Menu@2x").image);
+                new StyleBackground(UIExtensions.GetEditorIcon("_Menu@2x"));
             m_ToolbarDropdown = toolbarMenu.menu;
             toolbar.Add(toolbarMenu);
 
@@ -155,7 +158,7 @@ namespace Farbod.Prefabbricato
 
             m_ContentImage.image = preview ?? null;
             m_ContentTitle.text = !string.IsNullOrEmpty(title)?title: "Nothing To Show";
-            this.OnTagsChange=onTagsChange;
+            this.onLabelsChange=onTagsChange;
         }
 
         /// <summary>
@@ -182,6 +185,7 @@ namespace Farbod.Prefabbricato
             if (string.IsNullOrEmpty(text) || activeTags.ContainsKey(text))
                 return;
 
+            #region template
             var finalColor = color.HasValue ? color.Value : TAG_COLOR_DEFAULT;
             finalColor.a = Mathf.Min(finalColor.a, TAG_COLOR_MAX_OPACITY);
 
@@ -201,15 +205,21 @@ namespace Farbod.Prefabbricato
                 tag.Add(remove_button);
             }
 
-
             m_ContentTagContainer.Add(tag);
+            #endregion
+
+            #region events
+            //Click event
+            tag.RegisterCallback<ClickEvent>(evt => onLabelClicked?.Invoke(text));
+            //Context menu manipulator
+            tag.AddManipulator(new ContextualMenuManipulator(e => onLabelContextMenu?.Invoke(text, e)));
+            #endregion
+
+
+            
+
             activeTags.Add(text, tag);
-
-
-            if(OnTagsChange != null)
-            {
-                OnTagsChange.Invoke(activeTags.Keys.ToArray());
-            }
+            onLabelsChange?.Invoke(activeTags.Keys.ToArray());
         }
         private void RemoveTag(string text)
         {
@@ -219,9 +229,9 @@ namespace Farbod.Prefabbricato
 
             activeTags.Remove(text);
 
-            if (OnTagsChange != null)
+            if (onLabelsChange != null)
             {
-                OnTagsChange.Invoke(activeTags.Keys.ToArray());
+                onLabelsChange.Invoke(activeTags.Keys.ToArray());
             }
         }
         private void AddTagFromField()

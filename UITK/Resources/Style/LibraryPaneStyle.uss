@@ -62,13 +62,11 @@
     border-radius: var(--unity-metrics-default-border_radius);
     border-width: 1px;
     font-size: var(--unity-metrics-default-font_semi_small_size);
-    -unity-text-align: middle-center;
     align-items: center;
     margin-bottom: 2px;
     flex-grow: 0;
     flex-direction: row;
     height: var(--unity-metrics-single_line-height);
-    justify-content: space-between;
 }
 
 .library-view .prefab-tag:enabled:hover {
@@ -82,3 +80,9 @@
     flex-shrink: 1;
     padding-right: 4px;
 }
+
+
+
+
+
+

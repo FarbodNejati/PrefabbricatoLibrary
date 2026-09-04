@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using Farbod.Prefabbricato.Backend;
 using static System.Net.Mime.MediaTypeNames;
 using static Farbod.Prefabbricato.EditorDataManager;
+using System.Runtime.Remoting.Messaging;
 
 namespace Farbod.Prefabbricato
 {
@@ -15,21 +16,23 @@ namespace Farbod.Prefabbricato
         private readonly static Color TAG_COLOR_DEFAULT = Color.mediumAquamarine;
         private readonly static float TAG_COLOR_MAX_OPACITY = 0.1f;
         private readonly static string m_AssetLabelUssClassName = "prefab-tag";
-
+        private static Background m_LabelIconImage = UIExtensions.GetEditorIcon("d_FilterByLabel");
 
 
         private ScrollView m_List;
-        private ToolbarSearchField m_searchField;
-        private Dictionary<string, VisualElement> displayedLabels = new(); //Filtered labels based on search
-        private List<LabelData> allLabels = new(); // All registered labels
+        private ToolbarSearchField m_SearchField;
+        private Dictionary<string, VisualElement> m_DisplayedLabels = new(); //Filtered labels based on search
+        private List<LabelData> m_AllLabels = new(); // All registered labels
+
 
         internal event Action<string> onLabelClicked;
+        internal event Action<string, ContextualMenuPopulateEvent> onLabelContextMenu;
         public LibraryLabelsView()
         {
             //Search bar
-            m_searchField = new();
-            m_searchField.RegisterValueChangedCallback(OnSearchTextChanged);
-            hierarchy.Add(m_searchField);
+            m_SearchField = new();
+            m_SearchField.RegisterValueChangedCallback(OnSearchTextChanged);
+            hierarchy.Add(m_SearchField);
 
             //Scroll for content
             m_List = new ScrollView();
@@ -44,12 +47,12 @@ namespace Farbod.Prefabbricato
         private void FilterLabels(string searchText)
         {
             m_List.Clear();
-            displayedLabels.Clear();
+            m_DisplayedLabels.Clear();
 
             if (string.IsNullOrEmpty(searchText))
             {
                 // Show all labels
-                foreach (LabelData label in allLabels)
+                foreach (LabelData label in m_AllLabels)
                 {
                     CreateEntry(label.name, label.color, label.latestCount);
                 }
@@ -59,7 +62,7 @@ namespace Farbod.Prefabbricato
             // Case-insensitive search
             string searchLower = searchText.ToLowerInvariant();
 
-            foreach (LabelData label in allLabels)
+            foreach (LabelData label in m_AllLabels)
             {
                 if (label.name.ToLowerInvariant().Contains(searchLower))
                 {
@@ -70,8 +73,8 @@ namespace Farbod.Prefabbricato
 
         internal void SetLabels(List<LabelData> labels)
         {
-            allLabels = labels; // Store for filtering
-            displayedLabels.Clear();
+            m_AllLabels = labels; // Store for filtering
+            m_DisplayedLabels.Clear();
             m_List.Clear();
 
             // Show all labels initially
@@ -83,24 +86,42 @@ namespace Farbod.Prefabbricato
 
         private VisualElement CreateEntry(string text, Color? color, int counterValue)
         {
+            #region template
             var entry = new VisualElement();
-            entry.RegisterCallback<ClickEvent>(evt => onLabelClicked?.Invoke(text));
-
+            entry.AddToClassList(m_AssetLabelUssClassName);
 
             var finalColor = color.HasValue ? color.Value : TAG_COLOR_DEFAULT;
             finalColor.a = Mathf.Min(finalColor.a, TAG_COLOR_MAX_OPACITY);
-
             entry.style.backgroundColor = finalColor;
-            entry.AddToClassList(m_AssetLabelUssClassName);
 
+
+            //Label icon
+            var icon = new VisualElement();
+            icon.style.width = icon.style.height = 12;
+            icon.style.backgroundImage = m_LabelIconImage;
+            entry.Add(icon);
+
+            //Label name
             var label = new Label(text);
+            label.style.flexGrow = 1;
             entry.Add(label);
 
+            //Label counter
             var counter = new Label(counterValue.ToString());
             entry.Add(counter);
+            #endregion
+
+            #region events
+            //Click event
+            entry.RegisterCallback<ClickEvent>(evt => onLabelClicked?.Invoke(text));
+            //Context menu manipulator
+            entry.AddManipulator(new ContextualMenuManipulator(e => onLabelContextMenu?.Invoke(text, e)));
+            #endregion
+
+            
 
             m_List.contentContainer.Add(entry);
-            displayedLabels[name] = label;
+            m_DisplayedLabels[name] = label;
             return entry;
         }
     }

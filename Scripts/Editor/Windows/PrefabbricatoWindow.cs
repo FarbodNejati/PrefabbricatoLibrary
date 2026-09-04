@@ -1,5 +1,4 @@
 using Farbod.Prefabbricato.Backend;
-using System;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -19,7 +18,12 @@ namespace Farbod.Prefabbricato
 
 
         private VisualElement m_Root;
+        private VisualElement m_GettingStarted;
+
+        private SettingsView m_SettingsView;
+        private PrefabInspectorView m_Inspector;
         private PrefabbricatoLibraryView m_LibraryView;
+
         /// <summary>
         /// The menu item available in the editor toolbar for opening this window.
         /// </summary>
@@ -42,12 +46,9 @@ namespace Farbod.Prefabbricato
             PopulateWindow(m_Root);
             RegisterCallbacks(m_Root);
 
-            ShowStartMenu(m_Root, !CheckStartup(), SelectRootDirectory);
-
-            PrefabbricatoSettings.OnRootChange += () =>
-            {
-                ShowStartMenu(m_Root, !CheckStartup(), SelectRootDirectory);
-            };
+            //Show start up menu if needed
+            ShowStartMenu(m_Root, !CheckStartup());
+            
         }
 
         private void SelectRootDirectory()
@@ -73,46 +74,75 @@ namespace Farbod.Prefabbricato
             root.styleSheets.Add(style);
 
 
+            //Hook up "Getting Started"
+            m_GettingStarted = root.Q(className: m_GetStartedOverlayUssClassName);
+            var btn = m_GettingStarted.Q<Button>(className: m_GetStartedButtonUssClassName);
+            btn.clicked += SelectRootDirectory;
+
+            //Hook up settings view
+            m_SettingsView = root.Q<SettingsView>();
+            m_SettingsView?.Close();
+
+            //Hook up library view
             m_LibraryView = root.Q<PrefabbricatoLibraryView>(name: "library-pane");
-            m_LibraryView.SetScanWarningPromptEnabled(!AssetIndex.IsIndexed);
+            
+
+            //Inspector
+            m_Inspector = root.Q<PrefabInspectorView>();
         }
 
         /// <summary>
-        /// Register UI callbacks for user input and functionality.
+        /// Register events and callbacks for functionality.
         /// </summary>
         private void RegisterCallbacks(VisualElement root)
         {
-            UpdateAndRedrawOnIndexUpdate();
-            //Update Scan needed warning when index is updated.
-            AssetIndex.OnIndexUpdate += () => UpdateAndRedrawOnIndexUpdate();
-        }
-        void UpdateAndRedrawOnIndexUpdate()
-        {
-            m_LibraryView?.SetScanWarningPromptEnabled(!AssetIndex.IsIndexed);
-            m_LibraryView?.LibraryLabelsView?.SetLabels(AssetIndex.Labels);
-        }
-        private bool CheckStartup()
-        {
-            return PrefabbricatoSettings.IsSetUp();
-        }
-        private void ShowStartMenu(VisualElement root, bool show, Action getStarted)
-        {
-            var overlay = root.Q(className: m_GetStartedOverlayUssClassName);
-            if(overlay == null)
+            //--------------------UX---------------------
+
+            //Labels
+            m_LibraryView.LibraryLabelsView.onLabelContextMenu += BuildLabelContextMenu;
+            m_Inspector.onLabelContextMenu += BuildLabelContextMenu;
+
+            //Settings open button
+            if (m_SettingsView != null)
+                m_LibraryView.onSettingsButtonClick += m_SettingsView.Open;
+
+            //------------------BACKEND EVENTS  --------------------
+
+            //Show getting started overlay when root becomes invalid
+            PrefabbricatoSettings.onLibraryChange += () =>
             {
-                Debug.LogError($"[{WINDOW_TITLE}] Getting started overlay element not found");
-                return;
-            }
-            
+                ShowStartMenu(m_Root, !CheckStartup());
+                m_LibraryView?.SetScanWarningPromptEnabled(true);
+            };
+            OnIndexUpdate();
+            //Update Scan needed warning when index is updated.
+            AssetIndex.onIndexUpdate += () => OnIndexUpdate();
+
+            EditorDataManager.onTagColorsChange +=()=> m_LibraryView?.LibraryLabelsView.SetLabels(AssetIndex.Labels);
+
+
+        }
+        private void BuildLabelContextMenu(string label, ContextualMenuPopulateEvent evt)
+        {
+            var menu = evt.menu;
+            menu.AppendAction("Edit Label", e => { 
+                m_SettingsView.Open();
+                m_SettingsView.SetSearchQuery(label);
+            });
+        }
+        void OnIndexUpdate()
+        {
+            //Scan needed warning
+            m_LibraryView?.SetScanWarningPromptEnabled(!AssetIndex.IsIndexed);
+            //Library registered labels
+            m_LibraryView?.LibraryLabelsView.SetLabels(AssetIndex.Labels);
+            //Library project folders
+        }
+        private bool CheckStartup() => PrefabbricatoSettings.IsLibrarySetUp();
+        private void ShowStartMenu(VisualElement root, bool show)
+        {
             //Set overlay display
-            overlay.style.display = show?DisplayStyle.Flex:DisplayStyle.None;
-
-            //If hiding, skip the rest of the code
-            if (!show)
-                return;
-
-            var btn = overlay.Q<Button>(className: m_GetStartedButtonUssClassName);
-            btn.clicked += getStarted;
+            m_GettingStarted.style.display = show?DisplayStyle.Flex:DisplayStyle.None;
         }
     }
 }
