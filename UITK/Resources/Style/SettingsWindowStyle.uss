@@ -1,0 +1,194 @@
+
+
+Toolbar ToolbarButton {
+    border-left-width: 0;
+    border-right-width: 0;
+    border-top-width: 0;
+    border-bottom-width: 0;
+    padding-right: 1px;
+    padding-left: 1px;
+    margin-top: 0;
+    margin-bottom: 0;
+    margin-right: 2px;
+    border-top-left-radius: var(--unity-metrics-default-border_radius);
+    border-top-right-radius: var(--unity-metrics-default-border_radius);
+    border-bottom-right-radius: var(--unity-metrics-default-border_radius);
+    border-bottom-left-radius: var(--unity-metrics-default-border_radius);
+    margin-left: 2px;
+    padding-top: 1px;
+    padding-bottom: 1px;
+    align-self: center;
+    width: 16px;
+    height: 16px;
+    background-color: rgba(40, 40, 40, 0);
+}
+
+Toolbar ToolbarButton:enabled:hover {
+    border-left-width: 0;
+    border-right-width: 0;
+    border-top-width: 0;
+    border-bottom-width: 0;
+    border-top-left-radius: var(--unity-metrics-default-border_radius);
+    border-top-right-radius: var(--unity-metrics-default-border_radius);
+    border-bottom-right-radius: var(--unity-metrics-default-border_radius);
+    border-bottom-left-radius: var(--unity-metrics-default-border_radius);
+    background-color: var(--unity-colors-dropdown-background-hover);
+}
+
+Toolbar ToolbarButton .unity-button__image {
+    width: 14px;
+    height: 14px;
+}
+
+.settings-view {
+    padding-top: 4px;
+    padding-right: 2px;
+    padding-bottom: 2px;
+    padding-left: 2px;
+}
+
+.settings-view--closed {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    align-items: center;
+    align-self: center;
+    justify-content: center;
+    padding-top: 8px;
+    padding-right: 8px;
+    padding-bottom: 8px;
+    padding-left: 8px;
+    opacity: 1;
+    display: none;
+}
+
+.settings-view .settings-view_window {
+    background-color: var(--unity-colors-window-background);
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+    border-bottom-left-radius: 3px;
+    border-bottom-color: var(--unity-colors-default-border);
+    border-right-color: var(--unity-colors-default-border);
+    border-top-color: var(--unity-colors-default-border);
+    border-left-color: var(--unity-colors-default-border);
+    min-width: 280px;
+    height: 290px;
+    overflow: hidden;
+    min-height: 140px;
+    flex-direction: column;
+    width: 30%;
+}
+
+.settings-view Toolbar {
+    overflow: hidden;
+    --unity-colors-alternated_rows-background: rgb(255, 0, 0);
+    background-color: var(--unity-colors-app_toolbar-background);
+}
+
+.settings-view .settings-view_content {
+    flex-grow: 1;
+    margin-top: 2px;
+    margin-right: 2px;
+    margin-bottom: 2px;
+    margin-left: 2px;
+}
+
+.settings-view .settings-view_path-field .unity-base-field__label {
+    min-width: auto;
+    margin-right: 8px;
+}
+
+.settings-view .settings-view_path-field .unity-base-field__input {
+    border-top-color: var(--unity-colors-input_field-border_accent);
+    border-right-color: var(--unity-colors-input_field-border_accent);
+    border-bottom-color: var(--unity-colors-input_field-border);
+    border-left-color: var(--unity-colors-input_field-border);
+    opacity: 0.47;
+    padding-right: 24px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.settings-view .settings-view_path-field .unity-text-element {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.settings-view .settings-view_path-field Button {
+    overflow: hidden;
+    -unity-text-align: middle-center;
+    position: absolute;
+    border-bottom-left-radius: 0;
+    border-top-left-radius: 0;
+    min-width: 18px;
+    border-top-color: var(--unity-colors-input_field-border_accent);
+    margin-left: 0;
+    margin-right: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    border-bottom-color: var(--unity-colors-input_field-border);
+    border-right-color: var(--unity-colors-input_field-border);
+    border-left-color: var(--unity-colors-button-border);
+    right: 0;
+    bottom: 0;
+    height: var(--unity-metrics-single_line-height);
+}
+
+.settings-view .unity-search-field-base {
+    --unity-colors-alternated_rows-background: rgb(255, 0, 0);
+    margin-top: 4px;
+}
+
+.settings-view .settings-view_labels {
+    margin-top: 4px;
+    margin-left: 2px;
+    margin-right: 2px;
+    margin-bottom: 2px;
+    overflow: hidden;
+    border-top-left-radius: var(--unity-metrics-default-border_radius);
+    border-top-right-radius: var(--unity-metrics-default-border_radius);
+    border-bottom-right-radius: var(--unity-metrics-default-border_radius);
+    border-bottom-left-radius: var(--unity-metrics-default-border_radius);
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    border-top-color: var(--unity-colors-box-border);
+    border-right-color: var(--unity-colors-box-border);
+    border-bottom-color: var(--unity-colors-box-border);
+    border-left-color: var(--unity-colors-box-border);
+    --unity-colors-alternated_rows-background: rgb(255, 0, 0);
+}
+
+.settings-view .settings-view_labels .unity-list-view__empty-label {
+}
+
+.settings-view .settings-view_labels .unity-collection-view__item:hover {
+}
+
+.settings-view .settings-view_labels .unity-collection-view__item--alternative-background {
+}
+
+.label-control > .unity-toggle {
+    width: 15px;
+}
+
+.label-control > .unity-label {
+    width: 15px;
+    margin-left: 4px;
+}
+
+.settings-view .settings-view_labels-section-header {
+    --unity-colors-alternated_rows-background: rgb(255, 0, 0);
+    margin-top: 8px;
+    -unity-text-align: upper-center;
+    -unity-font-style: bold;
+}

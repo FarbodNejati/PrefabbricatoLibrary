@@ -39,7 +39,7 @@ namespace Farbod.Prefabbricato
         private DropdownMenu m_ToolbarDropdown;
         private VisualElement m_ScanWarningPrompt;
 
-        internal event Action onSettingsButtonClick;
+        //internal event Action onSettingsButtonClick;
 
 #if !UNITY_2023_2_OR_NEWER
         public new class UxmlFactory : UxmlFactory<VisualElement, UxmlTraits> {}
@@ -82,7 +82,7 @@ namespace Farbod.Prefabbricato
             toolbarMenu.
                 Q(className: ToolbarMenu.arrowUssClassName)
                 .style.backgroundImage =
-                new StyleBackground(UIExtensions.GetEditorIcon("d_Settings@2x"));
+                new StyleBackground(UIExtensions.GetEditorIcon("Settings@2x"));
 
             m_ToolbarDropdown = toolbarMenu.menu;
             CraeteToolbarMenuOptions(m_ToolbarDropdown);
@@ -129,7 +129,7 @@ namespace Farbod.Prefabbricato
         private void CraeteToolbarMenuOptions(DropdownMenu menu)
         {
             menu.AppendAction("Build Index (Scan)", a => AssetIndex.BuildIndex());
-            menu.AppendAction("Settings", a => onSettingsButtonClick?.Invoke());
+            menu.AppendAction("Settings", a => SettingsWindow.ShowWindow());
 
         }
         /// <summary>

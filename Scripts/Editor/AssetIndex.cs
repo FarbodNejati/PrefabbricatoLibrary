@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
-using static Farbod.Prefabbricato.EditorDataManager;
+using static Farbod.Prefabbricato.IndexSavedDataManager;
 
 namespace Farbod.Prefabbricato.Backend
 {
@@ -30,7 +30,6 @@ namespace Farbod.Prefabbricato.Backend
         /// </summary>
         internal static Dictionary<string, HashSet<string>> AssetGUIDToAssetDataIndex { get; private set; } = new();
 
-        internal static List<LabelData> Labels { get; private set; } = new();
         internal static event Action onIndexUpdate;
 
         [InitializeOnLoadMethod]
@@ -45,7 +44,7 @@ namespace Farbod.Prefabbricato.Backend
                 return;
 
             //Load data from disk
-            var savedData = EditorDataManager.LoadIndexData();
+            var savedData = IndexSavedDataManager.LoadIndexData();
 
             //Check if we should load this data
             //(index data not null, and has assets indexed in it)
@@ -66,7 +65,7 @@ namespace Farbod.Prefabbricato.Backend
 
                 //Build asset guid to label index
                 AssetToLabelIndex = ReverseIndex(LabelToAssetIndex);
-                UpdateLabelsFromIndex();
+                //UpdateLabelsFromIndex();
                 //OnIndexUpdate?.Invoke();
             }
         }
@@ -100,7 +99,7 @@ namespace Farbod.Prefabbricato.Backend
             }
             //Build index : Label -> asset
             LabelToAssetIndex = ReverseIndex(AssetToLabelIndex);
-            UpdateLabelsFromIndex();
+            //UpdateLabelsFromIndex();
 
             //Results
             IsIndexed = true;
@@ -110,24 +109,23 @@ namespace Farbod.Prefabbricato.Backend
             //Debug
             Debug.Log($"[Prefabbricato] Scan completed. Indexed {prefab_guids.Count()} assets and {LabelToAssetIndex.Count()} labels.");
         }
-        private static void UpdateLabelsFromIndex()
-        {
-            var labelColors = EditorDataManager.GetAllAssignedLabelColors();
-            Labels.Clear();
+        //private static void UpdateLabelsFromIndex()
+        //{
+        //    var labelColors = EditorDataManager.GetAllAssignedLabelColors();
 
-            LabelData[] data = new LabelData[LabelToAssetIndex.Count];
-            int i = 0;
-            foreach (var item in LabelToAssetIndex)
-            {
-                string labelName = item.Key;
-                bool hasSavedColor = labelColors.TryGetValue(labelName, out var color);
-                data[i] = new(labelName, hasSavedColor?color:null, item.Value?.Count??0);
-                i++;
-            }
+        //    LabelData[] data = new LabelData[LabelToAssetIndex.Count];
+        //    int i = 0;
+        //    foreach (var item in LabelToAssetIndex)
+        //    {
+        //        string labelName = item.Key;
+        //        bool hasSavedColor = labelColors.TryGetValue(labelName, out var color);
+        //        data[i] = new(labelName, hasSavedColor?color:null, item.Value?.Count??0);
+        //        i++;
+        //    }
 
-            Array.Sort(data, (a, b) => b.latestCount.CompareTo(a.latestCount));
-            Labels.AddRange(data);
-        }
+        //    Array.Sort(data, (a, b) => b.latestCount.CompareTo(a.latestCount));
+        //    Labels.AddRange(data);
+        //}
         private static void SaveIndexData()
         {
             if (!IsIndexed)
@@ -139,8 +137,8 @@ namespace Farbod.Prefabbricato.Backend
                 labelAssetIndex[label] = LabelToAssetIndex[label].ToList();
             }
 
-            EditorDataManager.IndexData data = new(labelAssetIndex, LastIndexTime);
-            EditorDataManager.SaveIndexData(data);
+            IndexSavedDataManager.IndexData data = new(labelAssetIndex, LastIndexTime);
+            IndexSavedDataManager.SaveIndexData(data);
         }
         private static Dictionary<T2, HashSet<T1>> ReverseIndex<T1, T2>(Dictionary<T1, HashSet<T2>> index)
         {

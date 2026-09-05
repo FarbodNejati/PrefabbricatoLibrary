@@ -3,7 +3,7 @@
     <Style src="project://database/Assets/PrefabrricatoLibrary/UITK/Resources/Style/LibraryPaneStyle.uss?fileID=7433441132597879392&amp;guid=b17084bd5cd453f4fbf543d7444f15bf&amp;type=3#LibraryPaneStyle"/>
     <Style src="project://database/Assets/PrefabrricatoLibrary/UITK/Resources/Style/PrefabbricatoPrefabViewStyle.uss?fileID=7433441132597879392&amp;guid=654698d3189c4414abcf98a000b52726&amp;type=3#PrefabbricatoPrefabViewStyle"/>
     <Farbod.Prefabbricato.SplitView orientation="Horizontal" name="SplitView" fixed-pane-initial-dimension="190" fixed-pane-index="0">
-        <Farbod.Prefabbricato.SplitView orientation="Vertical" name="fixed-pane" fixed-pane-initial-dimension="140" fixed-pane-index="1">
+        <Farbod.Prefabbricato.SplitView orientation="Vertical" name="fixed-pane" fixed-pane-initial-dimension="160" fixed-pane-index="1">
             <Farbod.Prefabbricato.PrefabInspectorView/>
             <Farbod.Prefabbricato.PrefabbricatoLibraryView name="library-pane"/>
         </Farbod.Prefabbricato.SplitView>
@@ -21,5 +21,4 @@
             <ui:Button text="+ Select Root" display-tooltip-when-elided="true" name="getting-started_button" class="getting-started_button" style="-unity-font-style: normal; font-size: 14px; margin-top: 4px; margin-right: 8px; margin-bottom: 4px; margin-left: 8px;"/>
         </ui:VisualElement>
     </ui:VisualElement>
-    <Farbod.Prefabbricato.SettingsView class="settings-view"/>
 </ui:UXML>

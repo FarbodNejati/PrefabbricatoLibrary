@@ -1,157 +1,159 @@
-﻿using Farbod.Prefabbricato;
 using Farbod.Prefabbricato.Backend;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEditor;
-using UnityEditor.Search;
+using UnityEditor.PackageManager.UI;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Farbod.Prefabbricato
 {
-    /// <summary>
-    /// A uxml element containing the GUI to modify the tool settings such as:
-    ///  - Library path
-    ///  - Label colors
-    /// </summary>
-#if UNITY_2023_2_OR_NEWER
-    [UxmlElement]
-#endif
-    public partial class SettingsView:VisualElement
+    public class SettingsWindow : EditorWindow
     {
-#if !UNITY_2023_2_OR_NEWER
-        public new class UxmlFactory : UxmlFactory<VisualElement, UxmlTraits> {}
-        public new class UxmlTraits : VisualElement.UxmlTraits{}
-#endif
+        //Window Config
+        static readonly string STYLESHEET_RESOURCE_PATH = "Style/SettingsWindowStyle";
+        static readonly string WINDOW_ICON_CONTENT = "Settings@2x";
+        static readonly string WINDOW_TITLE = "Prefabbricato Settings";
+        static readonly Vector2 WINDOW_MIN_SIZE = new(260, 180);
+        static readonly Vector2 WINDOW_MAX_SIZE = new(400, 600);
+        
         //Config
-        private readonly static string HEADER_TITLE = "Settings";
-        private static Background m_PathChangeIcon = UIExtensions.GetEditorIcon("d_Folder Icon");
-        private readonly static Color TAG_COLOR_DEFAULT = Color.mediumAquamarine;
+        private readonly static Color LABEL_COLOR_DEFAULT = Color.mediumAquamarine;
 
         //Uss
         internal readonly static string ussClassName = "settings-view";
-        internal readonly static string closedUssClassName = ussClassName+"--closed";
-        internal readonly static string m_windowUssClassName = ussClassName+"_window";
-        internal readonly static string m_contentUssClassName = ussClassName + "_content";
         private readonly static string m_pathFieldUssClassName = ussClassName + "_path-field";
         private readonly static string m_pathFieldButtonUssClassName = m_pathFieldUssClassName + "__button";
 
-        private readonly static string m_labelListUssClassName = ussClassName+"_labels";
+        private readonly static string m_labelListUssClassName = ussClassName + "_labels";
         private readonly static string m_labelEntryUssClassName = "label-control";
 
         TextField m_PathField;
         Button m_PathChangeButton;
 
         ListView m_LabelsList;
-        TextField m_LabelsSearchField;
+        ToolbarSearchField m_LabelsSearchField;
 
         private Dictionary<string, Color?> m_LabelEntries;
         private List<KeyValuePair<string, Color?>> m_ShownLabelEntries;
-        public SettingsView()
+
+
+        private VisualElement m_Root;
+
+        /// <summary>
+        /// The menu item available in the editor toolbar for opening this window.
+        /// </summary>
+        ///[MenuItem("Tools/Prefabbricato Settings")]
+        public static void ShowWindow()
         {
+            var wnd = GetWindow<SettingsWindow>();
+            var icon = EditorGUIUtility.IconContent(WINDOW_ICON_CONTENT).image;
+            wnd.titleContent = new GUIContent(WINDOW_TITLE, icon);
+            wnd.minSize = WINDOW_MIN_SIZE;
+            wnd.maxSize = WINDOW_MAX_SIZE;
+        }
 
-            CreateWindow(out VisualElement content);
-            PopulateWindowContent(content);
-            
+        private void OnDestroy()
+        {
+            m_LabelsSearchField.SetValueWithoutNotify("");
+            SaveActiveColorEntries();
+        }
 
+        /// <summary>
+        /// The main function that is called when this window is created.
+        /// </summary>
+        protected virtual void CreateGUI()
+        {
+            m_Root = base.rootVisualElement;
+
+            //Load default stylesheet
+            StyleSheet style = Resources.Load<StyleSheet>(STYLESHEET_RESOURCE_PATH);
+            Debug.Assert(style != null, $"[{WINDOW_TITLE}] Stylesheet not found at {STYLESHEET_RESOURCE_PATH}");
+            m_Root.styleSheets.Add(style);
+
+
+            m_Root.AddToClassList(ussClassName);
+            PopulateWindowContent(m_Root);
             RegisterCallbacks();
+
+            FetchProjectLabels();
+
+            //m_Root.schedule.Execute(() =>
+            //{
+            //    m_Root.AddToClassList(ussClassName);
+            //    PopulateWindowContent(m_Root);
+            //    RegisterCallbacks();
+
+            //    RefreshColorEntries();
+            //});
         }
-        private void CreateWindow(out VisualElement content)
-        {
-            this.pickingMode = PickingMode.Ignore;
 
-            //Window to contain content
-            VisualElement window = new();
-            window.AddToClassList(m_windowUssClassName);
-            hierarchy.Add(window);
-
-            #region header
-            //Header toolbar
-            var header = new Toolbar();
-            window.Add(header);
-
-            //Header label
-            var toolbar_label = new Label(HEADER_TITLE);
-            header.Add(toolbar_label);
-
-            //Toolbar flex space
-            var toolbar_space = new ToolbarSpacer();
-            toolbar_space.style.flexGrow = 1;
-            header.Add(toolbar_space);
-
-            //Header close button
-            var close_button = new ToolbarButton(() => Close());
-            close_button.text = "X";
-            header.Add(close_button);
-            #endregion
-            
-            //Content scroll
-            ScrollView scroll = new();
-            scroll.verticalScrollerVisibility = ScrollerVisibility.Auto;
-            scroll.style.flexGrow = 1;
-            window.Add(scroll);
-
-            content = scroll.contentContainer;
-            content.AddToClassList(m_contentUssClassName);
-        }
         private void PopulateWindowContent(VisualElement content)
         {
             #region Library Path
             m_PathField = new TextField("Library Path");
+            //Set initial value
             m_PathField.value = PrefabbricatoSettings.LibraryPath;
             m_PathField.AddToClassList(m_pathFieldUssClassName);
-            content.Add(m_PathField);
 
             var textField = m_PathField.Q(className: "unity-base-field__input");
             textField.SetEnabled(false);//Disable the text field itself so you cant change directly
 
             //Path change button
-            m_PathChangeButton = new Button(m_PathChangeIcon);
+            m_PathChangeButton = new Button(UIExtensions.GetEditorIcon("Folder Icon"));
             var icon = m_PathChangeButton.Q(className: Button.imageUSSClassName);
             icon.style.width = icon.style.height = 12;
             m_PathChangeButton.AddToClassList(m_pathFieldButtonUssClassName);
-
-            m_PathField.Add(m_PathChangeButton); //Add directly into text field
             m_PathChangeButton.SetEnabled(true);
+
             #endregion
 
             #region Labels Congifuration
-            m_LabelsSearchField = new("Search Labels");
-            content.Add(m_LabelsSearchField);
+            Label section_heading = new Label("Label Colors");
+            section_heading.AddToClassList(ussClassName + "_labels-section-header");
+
+            m_LabelsSearchField = new();
+            m_LabelsSearchField.style.width = new StyleLength(StyleKeyword.Auto);
             m_LabelsSearchField.RegisterValueChangedCallback(evt =>
             {
                 UpdateList(evt.newValue);
             });
 
 
-            
             SetupListView();
+
+            content.Add(m_PathField);
+            m_PathField.Add(m_PathChangeButton); //Add directly into text field
+
+            content.Add(section_heading);
+            content.Add(m_LabelsSearchField);
             content.Add(m_LabelsList);
             #endregion
         }
-        private void UpdateList(string searchText="")
+        private void UpdateList(string query = null)
         {
+            if (query != null)
+            {
+                m_LabelsSearchField?.SetValueWithoutNotify(query);
+            }
             // Update filtered entries based on search text
-            UpdateFilteredEntries(searchText);
+            UpdateFilteredEntries(query ?? m_LabelsSearchField.value);
 
             // Refresh the list view
             m_LabelsList.RefreshItems();
         }
         private void UpdateFilteredEntries(string searchText)
         {
-            if(m_LabelEntries==null || m_LabelEntries.Count ==0)
-                    return;
+            if (m_LabelEntries == null || m_LabelEntries.Count == 0)
+                return;
 
             m_ShownLabelEntries.Clear();
 
             var query = string.IsNullOrEmpty(searchText)
                 ? m_LabelEntries.AsEnumerable()
                 : m_LabelEntries.Where(kvp =>
-                    kvp.Key.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0);
+                    kvp.Key.IndexOf(searchText, System.StringComparison.OrdinalIgnoreCase) >= 0);
 
             m_ShownLabelEntries.AddRange(query);
         }
@@ -197,6 +199,8 @@ namespace Farbod.Prefabbricato
                     var key = m_ShownLabelEntries[idx].Key;
                     m_LabelEntries[key] = evt.newValue;
                     m_ShownLabelEntries[idx] = new(key, evt.newValue); // use newValue, not stale entry.Value
+
+                    SaveActiveColorEntries();
                 });
 
                 toggle.RegisterValueChangedCallback(evt =>
@@ -219,6 +223,8 @@ namespace Farbod.Prefabbricato
                         m_LabelEntries[key] = null;
                         m_ShownLabelEntries[idx] = new(key, null);
                     }
+
+                    SaveActiveColorEntries();
                 });
 
                 return itemContainer;
@@ -238,7 +244,7 @@ namespace Farbod.Prefabbricato
                 label.text = entry.Key;
 
                 bool hasValue = entry.Value.HasValue;
-                colorField.SetValueWithoutNotify(hasValue ? entry.Value.Value : TAG_COLOR_DEFAULT);
+                colorField.SetValueWithoutNotify(hasValue ? entry.Value.Value : LABEL_COLOR_DEFAULT);
                 colorField.SetEnabled(hasValue);
 
                 toggle.SetValueWithoutNotify(hasValue);
@@ -247,64 +253,59 @@ namespace Farbod.Prefabbricato
             m_LabelsList.fixedItemHeight = 24;
             m_LabelsList.showAlternatingRowBackgrounds = AlternatingRowBackground.All;
             m_LabelsList.itemsSource = m_ShownLabelEntries;
+            m_LabelsList.selectionType = SelectionType.Single;
         }
 
-
-        private void RegisterCallbacks()
-        {
-            //Choose library button
-            m_PathChangeButton.clicked += () => PrefabbricatoSettings.SelectLibraryDirectory();
-            //Update library path
-            PrefabbricatoSettings.onLibraryChange += () =>
-            {
-                m_PathField.value = PrefabbricatoSettings.LibraryPath;
-            };
-        }
-
-        internal void Open()
-        {
-            RemoveFromClassList(closedUssClassName);
-            LoadColorEntries();
-        }
-        internal void SetSearchQuery(string query)
-        {
-            UpdateList(query);
-            m_LabelsSearchField.SetValueWithoutNotify(query);
-        }
-
-        private void LoadColorEntries()
+        private void FetchProjectLabels()
         {
             //First get user assigned label colors
-            Dictionary<string, Color?> result = EditorDataManager.GetAllAssignedLabelColors() //Get all assigned label from disk
-                .ToDictionary(kvp => kvp.Key, kvp => new Color?(kvp.Value));
-
-            //Now get unassgined, but indexed labels
-            var allLabels = AssetIndex.Labels;
-            foreach (var label in allLabels)
-            {
-                if (!result.ContainsKey(label.name))
-                    result[label.name] = null;
-            }
-
-
-            m_LabelEntries = result;
-
+            m_LabelEntries = LabelUtilities.GetProjectLabels(LabelSelection.IndexedAndColorAssigned);
             UpdateList();
         }
-
-        internal void Close()
-        {
-            m_LabelsSearchField.SetValueWithoutNotify("");
-            AddToClassList(closedUssClassName);
-            SaveActiveColorEntries();
-        }
-
         private void SaveActiveColorEntries()
         {
             if (m_LabelEntries == null || m_LabelEntries.Count == 0)
                 return;
 
-            EditorDataManager.SaTLabelColors(m_LabelEntries);
+            PrefabbricatoSettings.instance.AssignColorToLabels(m_LabelEntries);
+        }
+
+        private void RegisterCallbacks()
+        {
+            //Choose library double click
+            m_PathField.labelElement.RegisterCallback<ClickEvent>(evt =>
+            {
+                if (evt.clickCount > 1)
+                    PrefabbricatoSettings.SelectLibraryDirectory();
+            });
+            m_PathField.tooltip = m_PathField.value;
+            m_PathField.RegisterValueChangedCallback(e => { m_PathField.tooltip = e.newValue; });
+
+            //Choose library button
+            m_PathChangeButton.clicked += () => PrefabbricatoSettings.SelectLibraryDirectory();
+            //Update library path
+            PrefabbricatoSettings.onLibraryChange += (p) => m_PathField.value = p;
+        }
+        private void PingLabelInList(string label)
+        {
+            UpdateList("");
+            int index = m_ShownLabelEntries.FindIndex(kvp => kvp.Key == label);
+            if (index >= 0 && index < m_ShownLabelEntries.Count)
+            {
+                m_LabelsList.ScrollToItem(index);
+                m_LabelsList.SetSelection(index);
+            }
+
+        }
+        /// <summary>
+        /// Select and scroll to a specific label, so the user can easily find it.
+        /// </summary>
+        /// <param name="label"></param>
+        public static void PingLabel(string label)
+        {
+			ShowWindow();
+            var wnd = GetWindow<SettingsWindow>();
+            wnd.PingLabelInList(label);
         }
     }
 }

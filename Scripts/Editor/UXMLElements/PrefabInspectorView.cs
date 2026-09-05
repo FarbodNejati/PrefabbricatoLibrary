@@ -236,7 +236,7 @@ namespace Farbod.Prefabbricato
         }
         private void AddTagFromField()
         {
-            AddTag(m_AddTagField.value, TAG_COLOR_DEFAULT);
+            AddTag(m_AddTagField.value.Trim(), TAG_COLOR_DEFAULT);
             m_AddTagField.value = "";
         }
         private void CatchFieldSubmit(KeyDownEvent evt, Action onSubmit)

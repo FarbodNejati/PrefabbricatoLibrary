@@ -6,23 +6,29 @@ using UnityEngine.UIElements;
 using System.Collections.Generic;
 using Farbod.Prefabbricato.Backend;
 using static System.Net.Mime.MediaTypeNames;
-using static Farbod.Prefabbricato.EditorDataManager;
+using static Farbod.Prefabbricato.IndexSavedDataManager;
 using System.Runtime.Remoting.Messaging;
+using static UnityEngine.Audio.ProcessorInstance.AvailableData;
+using System.Reflection;
+using System.Linq;
 
 namespace Farbod.Prefabbricato
 {
     public partial class LibraryLabelsView : VisualElement
     {
-        private readonly static Color TAG_COLOR_DEFAULT = Color.mediumAquamarine;
-        private readonly static float TAG_COLOR_MAX_OPACITY = 0.1f;
+        private readonly static Color LABEL_COLOR_DEFAULT = Color.lightBlue;
+        private readonly static float TAG_COLOR_MAX_OPACITY = 0.15f;
         private readonly static string m_AssetLabelUssClassName = "prefab-tag";
-        private static Background m_LabelIconImage = UIExtensions.GetEditorIcon("d_FilterByLabel");
+        private readonly static string m_LabelNameUssClassName = m_AssetLabelUssClassName + "_name";
+        private readonly static string m_LabelCounterUssClassName = m_AssetLabelUssClassName+"_counter";
+
+        private static Background m_LabelIconImage = UIExtensions.GetEditorIcon("FilterByLabel");
 
 
-        private ScrollView m_List;
+        private ListView m_List;
         private ToolbarSearchField m_SearchField;
-        private Dictionary<string, VisualElement> m_DisplayedLabels = new(); //Filtered labels based on search
-        private List<LabelData> m_AllLabels = new(); // All registered labels
+        private Dictionary<string, Color?> m_LabelEntries;
+        private List<KeyValuePair<string, Color?>> m_ShownLabelEntries;
 
 
         internal event Action<string> onLabelClicked;
@@ -35,65 +41,25 @@ namespace Farbod.Prefabbricato
             hierarchy.Add(m_SearchField);
 
             //Scroll for content
-            m_List = new ScrollView();
+            m_List = new();
             hierarchy.Add(m_List);
+            m_List.fixedItemHeight = 24;
+            m_List.style.flexGrow = 1;
+            m_List.selectionType = SelectionType.None;
+            //List view functionality
+            m_ShownLabelEntries = new();
+            m_List.makeItem = CreateEntry;
+            m_List.bindItem = BindEntry;
+            m_List.itemsSource = m_ShownLabelEntries;
         }
-        private void OnSearchTextChanged(ChangeEvent<string> evt)
-        {
-            string searchText = evt.newValue?.Trim() ?? string.Empty;
-            FilterLabels(searchText);
-        }
-
-        private void FilterLabels(string searchText)
-        {
-            m_List.Clear();
-            m_DisplayedLabels.Clear();
-
-            if (string.IsNullOrEmpty(searchText))
-            {
-                // Show all labels
-                foreach (LabelData label in m_AllLabels)
-                {
-                    CreateEntry(label.name, label.color, label.latestCount);
-                }
-                return;
-            }
-
-            // Case-insensitive search
-            string searchLower = searchText.ToLowerInvariant();
-
-            foreach (LabelData label in m_AllLabels)
-            {
-                if (label.name.ToLowerInvariant().Contains(searchLower))
-                {
-                    CreateEntry(label.name, label.color, label.latestCount);
-                }
-            }
-        }
-
-        internal void SetLabels(List<LabelData> labels)
-        {
-            m_AllLabels = labels; // Store for filtering
-            m_DisplayedLabels.Clear();
-            m_List.Clear();
-
-            // Show all labels initially
-            foreach (LabelData label in labels)
-            {
-                CreateEntry(label.name, label.color, label.latestCount);
-            }
-        }
-
-        private VisualElement CreateEntry(string text, Color? color, int counterValue)
+        private VisualElement CreateEntry()
         {
             #region template
+            var container = new VisualElement();
+
             var entry = new VisualElement();
+            container.Add(entry);
             entry.AddToClassList(m_AssetLabelUssClassName);
-
-            var finalColor = color.HasValue ? color.Value : TAG_COLOR_DEFAULT;
-            finalColor.a = Mathf.Min(finalColor.a, TAG_COLOR_MAX_OPACITY);
-            entry.style.backgroundColor = finalColor;
-
 
             //Label icon
             var icon = new VisualElement();
@@ -102,27 +68,108 @@ namespace Farbod.Prefabbricato
             entry.Add(icon);
 
             //Label name
-            var label = new Label(text);
-            label.style.flexGrow = 1;
-            entry.Add(label);
+            var nameLabel = new Label("label");
+            nameLabel.AddToClassList(m_LabelNameUssClassName);
+            nameLabel.style.flexGrow = 1;
+            entry.Add(nameLabel);
 
             //Label counter
-            var counter = new Label(counterValue.ToString());
+            var counter = new Label("N/A");
+            counter.AddToClassList(m_LabelCounterUssClassName);
             entry.Add(counter);
             #endregion
 
             #region events
             //Click event
-            entry.RegisterCallback<ClickEvent>(evt => onLabelClicked?.Invoke(text));
+            entry.RegisterCallback<ClickEvent>(evt =>
+            {
+                //User data should hold the index of the item calling this event.
+
+                //Check if user data is integer
+                if (container.userData is not int idx) return;
+                //Check if index is in range
+                if (idx >= m_ShownLabelEntries.Count) return;
+
+
+                //Get label name by index
+                var labelName = m_ShownLabelEntries[idx].Key;
+                onLabelClicked?.Invoke(labelName);
+            });
             //Context menu manipulator
-            entry.AddManipulator(new ContextualMenuManipulator(e => onLabelContextMenu?.Invoke(text, e)));
+            entry.AddManipulator(new ContextualMenuManipulator(e =>
+            {
+                //User data should hold the index of the item calling this event.
+
+                //Check if user data is integer
+                if (container.userData is not int idx) return;
+                //Check if index is in range
+                if (idx >= m_ShownLabelEntries.Count) return;
+
+
+                //Get label name by index
+                var labelName = m_ShownLabelEntries[idx].Key;
+                onLabelContextMenu?.Invoke(labelName, e);
+            }));
             #endregion
 
-            
+            return container;
+        }
+        private void BindEntry(VisualElement element, int index)
+        {
+            if (index >= m_ShownLabelEntries.Count) return;
 
-            m_List.contentContainer.Add(entry);
-            m_DisplayedLabels[name] = label;
-            return entry;
+            ///Assign index to user data
+            ///This is then used by the callback events set up inside CreateEntry() to figure out which
+            ///Label an event originates from
+            element.userData = index;
+
+
+            var entry = m_ShownLabelEntries[index];
+
+            string name = entry.Key;
+            var color = entry.Value;
+            //Set label entry background color
+
+            var modifiedColor = color.HasValue ? color.Value : LABEL_COLOR_DEFAULT;
+            modifiedColor.a = Mathf.Min(modifiedColor.a, TAG_COLOR_MAX_OPACITY);
+            element.Q(className:m_AssetLabelUssClassName).style.backgroundColor = modifiedColor; //Dont apply directly to list entry
+
+            //Set label name
+            element.Q<Label>(className: m_LabelNameUssClassName).text = name;
+
+            //Set label counter
+            AssetIndex.LabelToAssetIndex.TryGetValue(name, out var hashset);//Get Asset count
+            element.Q<Label>(className: m_LabelCounterUssClassName).text = 
+                hashset!=null?hashset.Count.ToString():"N/A";
+        }
+
+        private void OnSearchTextChanged(ChangeEvent<string> evt)
+        {
+            string searchText = evt.newValue?.Trim() ?? string.Empty;
+            FilterLabels(searchText);
+            m_List.RefreshItems();
+        }
+
+        private void FilterLabels(string searchText)
+        {
+            if (m_LabelEntries == null || m_LabelEntries.Count == 0)
+                return;
+
+            m_ShownLabelEntries.Clear();
+
+            var query = string.IsNullOrEmpty(searchText)
+                ? m_LabelEntries.AsEnumerable()
+                : m_LabelEntries.Where(kvp =>
+                    kvp.Key.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0);
+
+            m_ShownLabelEntries.AddRange(query);
+        }
+
+        public void SetLabels(Dictionary<string, Color?> labels)
+        {
+            m_LabelEntries = labels;
+            FilterLabels(m_SearchField.value);
+            m_List.RefreshItems();
         }
     }
 }

@@ -9,7 +9,7 @@ namespace Farbod.Prefabbricato
     {
         static readonly string UXML_RESOURCE_PATH = "UXML/PrefabbricatoLibrary";
         static readonly string STYLESHEET_RESOURCE_PATH = "Style/PrefabbricatoLibraryStyle";
-        static readonly string WINDOW_ICON_CONTENT = "d_FilterByLabel";
+        static readonly string WINDOW_ICON_CONTENT = "FilterByLabel";
         static readonly string WINDOW_TITLE = "Prefabbricato";
         static readonly Vector2 WINDOW_MIN_SIZE = new(500, 400);
 
@@ -20,7 +20,7 @@ namespace Farbod.Prefabbricato
         private VisualElement m_Root;
         private VisualElement m_GettingStarted;
 
-        private SettingsView m_SettingsView;
+        /*private SettingsView m_SettingsView;*/
         private PrefabInspectorView m_Inspector;
         private PrefabbricatoLibraryView m_LibraryView;
 
@@ -51,10 +51,8 @@ namespace Farbod.Prefabbricato
             
         }
 
-        private void SelectRootDirectory()
-        {
-            PrefabbricatoSettings.SelectLibraryDirectory();
-        }
+        private void SelectRootDirectory() => PrefabbricatoSettings.SelectLibraryDirectory();
+
 
         /// <summary>
         /// Populate the library window with UI Elements.
@@ -80,8 +78,8 @@ namespace Farbod.Prefabbricato
             btn.clicked += SelectRootDirectory;
 
             //Hook up settings view
-            m_SettingsView = root.Q<SettingsView>();
-            m_SettingsView?.Close();
+            //m_SettingsView = root.Q<SettingsView>();
+            //m_SettingsView?.Close();
 
             //Hook up library view
             m_LibraryView = root.Q<PrefabbricatoLibraryView>(name: "library-pane");
@@ -103,13 +101,13 @@ namespace Farbod.Prefabbricato
             m_Inspector.onLabelContextMenu += BuildLabelContextMenu;
 
             //Settings open button
-            if (m_SettingsView != null)
-                m_LibraryView.onSettingsButtonClick += m_SettingsView.Open;
+            //if (m_SettingsView != null)
+            //    m_LibraryView.onSettingsButtonClick += m_SettingsView.Open;
 
             //------------------BACKEND EVENTS  --------------------
 
             //Show getting started overlay when root becomes invalid
-            PrefabbricatoSettings.onLibraryChange += () =>
+            PrefabbricatoSettings.onLibraryChange += (p) =>
             {
                 ShowStartMenu(m_Root, !CheckStartup());
                 m_LibraryView?.SetScanWarningPromptEnabled(true);
@@ -118,7 +116,7 @@ namespace Farbod.Prefabbricato
             //Update Scan needed warning when index is updated.
             AssetIndex.onIndexUpdate += () => OnIndexUpdate();
 
-            EditorDataManager.onTagColorsChange +=()=> m_LibraryView?.LibraryLabelsView.SetLabels(AssetIndex.Labels);
+            PrefabbricatoSettings.onLabelColorUpdate +=(l)=> m_LibraryView?.LibraryLabelsView.SetLabels(LabelUtilities.GetProjectLabels());
 
 
         }
@@ -126,8 +124,9 @@ namespace Farbod.Prefabbricato
         {
             var menu = evt.menu;
             menu.AppendAction("Edit Label", e => { 
-                m_SettingsView.Open();
-                m_SettingsView.SetSearchQuery(label);
+                SettingsWindow.PingLabel(label);
+                //m_SettingsView.Open();
+                //m_SettingsView.PingLabel(label);
             });
         }
         void OnIndexUpdate()
@@ -135,7 +134,7 @@ namespace Farbod.Prefabbricato
             //Scan needed warning
             m_LibraryView?.SetScanWarningPromptEnabled(!AssetIndex.IsIndexed);
             //Library registered labels
-            m_LibraryView?.LibraryLabelsView.SetLabels(AssetIndex.Labels);
+            m_LibraryView?.LibraryLabelsView.SetLabels(LabelUtilities.GetProjectLabels());
             //Library project folders
         }
         private bool CheckStartup() => PrefabbricatoSettings.IsLibrarySetUp();
