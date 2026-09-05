@@ -31,6 +31,9 @@ namespace Farbod.Prefabbricato.Backend
 
             //Saved fields
             [SerializeField]
+            public string indexPath;
+
+            [SerializeField]
             private string lastIndexBuildTime;
 
             // Serialized field for JSON
@@ -60,10 +63,11 @@ namespace Farbod.Prefabbricato.Backend
                 }
             }
 
-            public IndexData(Dictionary<string, List<string>> labelToAssetIndex, DateTime lastIndexBuildTime)
+            public IndexData(Dictionary<string, List<string>> labelToAssetIndex, DateTime lastIndexBuildTime, string indexPath)
             {
                 this.labelToAssetIndex = labelToAssetIndex;
                 LastIndexBuildTime = lastIndexBuildTime;
+                this.indexPath = indexPath;
             }
 
             // Convert dictionary to serializable format

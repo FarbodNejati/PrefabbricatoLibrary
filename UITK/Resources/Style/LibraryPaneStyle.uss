@@ -108,9 +108,9 @@
 }
 
 #labels-view .prefab-tag {
-    margin-right: 2px;
+    margin-right: 4px;
     margin-top: 2px;
-    margin-left: 2px;
+    margin-left: 4px;
     border-radius: 6px;
     border-width: 1px;
     font-size: var(--unity-metrics-default-font_semi_small_size);

@@ -11,7 +11,7 @@ namespace Farbod.Prefabbricato.Backend
         /// <summary>
         /// The path used for finding and indexing assets.
         /// </summary>
-        private static string DEFAULT_SCAN_PATH => PrefabbricatoSettings.LibraryPath;
+        private static string SCAN_PATH => PrefabbricatoSettings.LibraryPath;
 
         /// <summary>
         /// At how many days is the asset index considered stale?
@@ -31,6 +31,8 @@ namespace Farbod.Prefabbricato.Backend
                 m_LastIndexTime = value;
             }
         }
+
+        internal static string m_LastIndexPath;
         /// <summary>
         /// How long ago the last indexing scan operation took place
         /// </summary>
@@ -59,6 +61,11 @@ namespace Farbod.Prefabbricato.Backend
             //Subscribe to app quit for saving idex data
             EditorApplication.quitting += () => SaveIndexData();
 
+            PrefabbricatoSettings.onLibraryChange += (newPath) =>
+            {
+                if(m_LastIndexPath!=newPath)
+                    IsIndexed = false;
+            };
 
             //Return if already indexed
             if (IsIndexed)
@@ -70,8 +77,8 @@ namespace Farbod.Prefabbricato.Backend
 
 
             //Check if we should load this data
-            //(index data not null, and has assets indexed in it)
-            if (savedData?.labelToAssetIndex!=null)
+            //(index data not null, and path matches)
+            if (savedData?.labelToAssetIndex!=null && savedData.indexPath== SCAN_PATH)
             {
                 IsIndexed = true;
 
@@ -100,7 +107,7 @@ namespace Farbod.Prefabbricato.Backend
         internal static void BuildIndex(string path = null)
         {
             if (path == null)
-                path = DEFAULT_SCAN_PATH;
+                path = SCAN_PATH;
 
             //Check Directory validity
             if (!AssetDatabase.IsValidFolder(path))
@@ -127,6 +134,7 @@ namespace Farbod.Prefabbricato.Backend
             //Results
             IsIndexed = true;
             LastIndexTime = DateTime.Now;
+            m_LastIndexPath = path;
             onIndexUpdate?.Invoke();
             SaveIndexData();
             //Debug
@@ -160,7 +168,7 @@ namespace Farbod.Prefabbricato.Backend
                 labelAssetIndex[label] = LabelToAssetIndex[label].ToList();
             }
 
-            IndexSavedDataManager.IndexData data = new(labelAssetIndex, LastIndexTime);
+            IndexSavedDataManager.IndexData data = new(labelAssetIndex, LastIndexTime, m_LastIndexPath);
             IndexSavedDataManager.SaveIndexData(data);
         }
         private static Dictionary<T2, HashSet<T1>> ReverseIndex<T1, T2>(Dictionary<T1, HashSet<T2>> index)
