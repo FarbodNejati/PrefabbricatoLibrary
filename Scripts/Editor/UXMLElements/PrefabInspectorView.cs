@@ -154,7 +154,7 @@ namespace Farbod.Prefabbricato
         internal void ClearContent()
         {
             SetContent(null, null, null);
-            //m_Content.SetEnabled(false);
+            m_Content.SetEnabled(false);
         }
         internal void SetContent(Texture preview, string title, string[] tags, Action<string[]> onTagsChange = null)
         {
