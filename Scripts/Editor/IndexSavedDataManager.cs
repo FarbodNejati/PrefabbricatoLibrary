@@ -2,12 +2,10 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using UnityEditor;
 using UnityEngine;
-using static UnityEngine.Analytics.IAnalytic;
 
-namespace Farbod.Prefabbricato
+namespace Farbod.Prefabbricato.Backend
 {
     /// <summary>
     /// This class saves/loads the index from disk

@@ -21,6 +21,14 @@
     overflow: hidden;
 }
 
+#project-view .unity-tree-view__item-content {
+    margin-left: 0;
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    align-self: center;
+}
+
 .unity-tab-view__header-container {
     flex-grow: 1;
     justify-content: center;
@@ -42,20 +50,56 @@
     border-right-width: 1px;
     border-bottom-width: 1px;
     border-left-width: 1px;
-    border-left-color: var(--unity-colors-default-border);
-    border-bottom-color: var(--unity-colors-default-border);
-    border-right-color: var(--unity-colors-default-border);
-    border-top-color: var(--unity-colors-default-border);
+    border-left-color: var(--unity-colors-app_toolbar_button-background);
+    border-bottom-color: var(--unity-colors-app_toolbar_button-background);
+    border-right-color: var(--unity-colors-app_toolbar_button-background);
     margin-top: 0;
     margin-right: 2px;
     margin-bottom: 0;
     margin-left: 0;
-    right: 100%;
     align-self: center;
     flex-direction: row;
+    right: 100%;
+    background-image: resource("Style/scan_warn_gradient");
+    -unity-background-image-tint-color: rgba(255, 190, 7, 0.08);
+    -unity-background-scale-mode: stretch-to-fill;
+    background-size: 100px 100%;
+    background-position-y: center;
+    align-items: center;
+    background-position-x: left 0;
+    border-top-color: var(--unity-colors-app_toolbar_button-background);
 }
 
-.library-view ToolbarSearchField {
+.library-view .library-view_scan-warning:hover {
+    background-size: 300px 100%;
+    -unity-background-image-tint-color: rgba(176, 140, 62, 0.19);
+}
+
+.library-view .library-view_scan-warning .unity-button {
+    margin-left: 2px;
+    margin-right: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    opacity: 1;
+    padding-bottom: 1px;
+    padding-top: 1px;
+    font-size: var(--unity-metrics-default-font_semi_small_size);
+    background-color: rgba(64, 64, 64, 0.72);
+    border-left-color: rgba(70, 70, 70, 0.5);
+    border-right-color: rgba(70, 70, 70, 0.5);
+    border-top-color: rgba(70, 70, 70, 0.5);
+    border-bottom-color: rgba(70, 70, 70, 0.5);
+}
+
+.library-view .library-view_scan-warning .unity-button:hover {
+    border-left-color: rgb(70, 70, 70);
+    border-right-color: rgb(70, 70, 70);
+    border-top-color: rgb(70, 70, 70);
+    border-bottom-color: rgb(70, 70, 70);
+    background-color: rgb(78, 78, 78);
+}
+
+#labels-view ToolbarSearchField {
     margin-right: 4px;
     margin-left: 4px;
     align-self: stretch;
@@ -63,7 +107,7 @@
     min-width: 0;
 }
 
-.library-view .prefab-tag {
+#labels-view .prefab-tag {
     margin-right: 2px;
     margin-top: 2px;
     margin-left: 2px;
@@ -78,18 +122,25 @@
     padding-left: 2px;
 }
 
-.library-view .prefab-tag:enabled:hover {
+#labels-view .prefab-tag:enabled:hover {
     border-color: rgba(255, 255, 255, 0.2);
 }
 
-.library-view .prefab-tag .prefab-tag_name {
+#labels-view .prefab-tag .prefab-tag_name {
     padding-left: 2px;
     text-overflow: ellipsis;
     flex-grow: 1;
 }
 
-.library-view .prefab-tag .prefab-tag_counter {
+#labels-view .prefab-tag .prefab-tag_counter {
     padding-right: 4px;
     min-width: 18px;
     -unity-text-align: upper-center;
+}
+
+#project-view #folder-name-field {
+    margin-left: 0;
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
 }

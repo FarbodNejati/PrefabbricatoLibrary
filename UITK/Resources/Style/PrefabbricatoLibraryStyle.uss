@@ -9,10 +9,6 @@ Toolbar > Label {
 }
 
 Toolbar ToolbarMenu {
-    border-left-width: 0;
-    border-right-width: 0;
-    border-top-width: 0;
-    border-bottom-width: 0;
     padding-right: 1px;
     padding-left: 1px;
     margin-top: 0;
@@ -26,26 +22,22 @@ Toolbar ToolbarMenu {
     padding-top: 1px;
     padding-bottom: 1px;
     background-color: rgba(0, 0, 0, 0);
-    align-self: center;
     width: 16px;
     height: 16px;
+    align-self: center;
+    border-top-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 0;
+    border-left-width: 0;
 }
 
 Toolbar ToolbarMenu:enabled:hover {
-    border-left-width: 0;
-    border-right-width: 0;
-    border-top-width: 0;
-    border-bottom-width: 0;
-    border-top-left-radius: var(--unity-metrics-default-border_radius);
-    border-top-right-radius: var(--unity-metrics-default-border_radius);
-    border-bottom-right-radius: var(--unity-metrics-default-border_radius);
-    border-bottom-left-radius: var(--unity-metrics-default-border_radius);
     background-color: var(--unity-colors-dropdown-background-hover);
 }
 
 Toolbar ToolbarMenu .unity-toolbar-menu__arrow {
-    width: 14px;
-    height: 14px;
+    width: 100%;
+    height: 100%;
 }
 
 Toolbar ToolbarButton.unity-button--with-icon-only {
@@ -84,8 +76,8 @@ Toolbar ToolbarButton.unity-button--with-icon-only:enabled:hover {
 }
 
 Toolbar ToolbarButton .unity-button__image {
-    width: 14px;
-    height: 14px;
+    width: 100%;
+    height: 100%;
 }
 
 #getting-started {
@@ -327,3 +319,25 @@ SplitView #fixed-pane Toolbar {
     border-right-color: var(--unity-colors-input_field-border-focus);
     border-bottom-color: var(--unity-colors-input_field-border-focus);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -66,19 +66,13 @@ namespace Farbod.Prefabbricato.Backend
             string startingPath = AssetDatabase.IsValidFolder(instance.libraryPath) ? instance.libraryPath : PROJECT_ASSET_PATH;
 
             //Open folder selection window
-            string folderPath = EditorUtility.OpenFolderPanel("Select Library Root", startingPath, "");
-
-            //Cancelled by user (no path selected)
-            if (string.IsNullOrEmpty(folderPath))
-                return false;
-
-            var relativePath = FileUtil.GetProjectRelativePath(folderPath);
+            string selectedPath = SelectFolderPanel(startingPath);
 
             //Validation check
-            while (!IsProjectPathValidForLibrary(relativePath)) //Re open selection panel
+            while (!IsProjectPathValidForLibrary(selectedPath)) //Re open selection panel
             {
                 //Cancelled by user (from folder panel)
-                if (string.IsNullOrEmpty(folderPath))
+                if (string.IsNullOrEmpty(selectedPath))
                     return false;
 
                 //Popup to reselect
@@ -87,19 +81,29 @@ namespace Farbod.Prefabbricato.Backend
                 if (!shouldRetry)
                     return false;
 
-                folderPath = EditorUtility.OpenFolderPanel("Select Library Root", folderPath, "");
+                selectedPath = SelectFolderPanel(startingPath);
             }
 
             //Finally, update path and save.
-            instance.libraryPath = relativePath;
+            instance.libraryPath = selectedPath;
             instance.Save(SAVE_AS_TEXT);
 
             //Notify other scripts.
             if (instance.libraryPath != oldPath)
-                onLibraryChange?.Invoke(relativePath);
+                onLibraryChange?.Invoke(selectedPath);
             return true;
         }
+        private static string SelectFolderPanel(string startingPath)
+        {
+            //Open folder selection window
+            string folderPath = EditorUtility.OpenFolderPanel("Select Library Root", startingPath, "");
 
+            //Cancelled by user (no path selected)
+            if (string.IsNullOrEmpty(folderPath))
+                return "";
+
+            return FileUtil.GetProjectRelativePath(folderPath);
+        }
         /// <summary>
         /// Colors assigned to labels by the user.
         /// </summary>

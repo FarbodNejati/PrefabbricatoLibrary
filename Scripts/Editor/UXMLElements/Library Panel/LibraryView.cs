@@ -3,16 +3,13 @@ using UnityEditor.UIElements;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
-using System.Collections.Generic;
 using Farbod.Prefabbricato.Backend;
-using static System.Net.Mime.MediaTypeNames;
-using System.Globalization;
 
 namespace Farbod.Prefabbricato
 {
     /// <summary>
-    /// The Element used to display a set of Prefabs.
-    /// You can multi-select Prefabs in this view to perform batch operations.
+    /// The library view seen under the inspector panel.
+    /// Used to show an overview of the library.
     /// </summary>
 #if UNITY_2023_2_OR_NEWER
     [UxmlElement]
@@ -33,13 +30,15 @@ namespace Farbod.Prefabbricato
         internal readonly static string labelsTabUssClassName = ussClassName + "_labels-tab";
         private readonly static string labelsTabContentUssClassName = labelsTabUssClassName + "__content";
         internal readonly static string ScanWarningPromptUssClassName = ussClassName+"_scan-warning";
-
         private TabView m_TabView;
-        private Tab m_ProjectDirTab;
-        internal LibraryLabelsView LibraryLabelsView { get; private set; }
-        private DropdownMenu m_ToolbarDropdown;
+
+        internal LibraryLabelsView LabelsView { get; private set; }
+        internal LibraryProjectView ProjectView { get; private set; }
+
+        private ToolbarMenu m_ScanToolbarDropdown;
         private VisualElement m_ScanWarningMessage;
         private Label m_ScanWarningPromptText;
+
         //internal event Action onSettingsButtonClick;
 
 #if !UNITY_2023_2_OR_NEWER
@@ -79,15 +78,12 @@ namespace Farbod.Prefabbricato
             toolbar.Add(toolbar_space);
 
             //Scan dropdown
-            var toolbarMenu = new ToolbarMenu();
-            toolbarMenu.
-                Q(className: ToolbarMenu.arrowUssClassName)
-                .style.backgroundImage =
-                new StyleBackground(UIExtensions.GetEditorIcon("Refresh@2x"));
-            toolbarMenu.tooltip = "Scan";
-            m_ToolbarDropdown = toolbarMenu.menu;
-            CreateScanMenuOptions(m_ToolbarDropdown);
-            toolbar.Add(toolbarMenu);
+            m_ScanToolbarDropdown = new ToolbarMenu();
+            m_ScanToolbarDropdown.Q(className: ToolbarMenu.arrowUssClassName)
+                .style.backgroundImage = new StyleBackground(UIExtensions.GetEditorIcon("Refresh@2x"));
+            m_ScanToolbarDropdown.tooltip = "Scan";
+            CreateScanMenuOptions(m_ScanToolbarDropdown.menu);
+            toolbar.Add(m_ScanToolbarDropdown);
 
 
             //Settings button
@@ -110,17 +106,62 @@ namespace Farbod.Prefabbricato
 
             //Asset labels tab
             var assetLabelsTab = AddTab(TAB_ASSET_LABELS_TITLE, projectTabUssClassName);
-            LibraryLabelsView = new();
-            assetLabelsTab.Add(LibraryLabelsView);
+            LabelsView = new();
+            LabelsView.name = "labels-view";
+            assetLabelsTab.Add(LabelsView);
 
             //Project tab (folders and directories)
-            m_ProjectDirTab = AddTab(TAB_PROJECT_FILES_TITLE, projectTabUssClassName);
-            PopulateProjectTab();
+            var projectDirTab = AddTab(TAB_PROJECT_FILES_TITLE, projectTabUssClassName);
+            ProjectView = new(PrefabbricatoSettings.LibraryPath, true);
+            ProjectView.name = "project-view";
+            projectDirTab.Add(ProjectView);
 
 
             m_TabView.MakeHeaderStyleButtonGroup();
         }
 
+        /// <summary>
+        /// Create a tab, with a scroll view inside and a visual element to contain its content
+        /// </summary>
+        /// <param name="title"></param>
+        /// <param name="tabView"></param>
+        /// <param name="ussClassName"></param>
+        /// <returns></returns>
+        Tab AddTab(string title, string ussClassName)
+        {
+            var tab = new Tab(title);
+            tab.AddToClassList(ussClassName);
+
+            //Setting flex frow to 1 so the tab fill the entire panel
+            tab.style.flexGrow = 1;
+            tab.contentContainer.style.flexGrow = 1;
+
+            m_TabView.Add(tab);
+            return tab;
+        }
+
+        
+        private void CreateScanMenuOptions(DropdownMenu menu)
+        {
+            menu.ClearItems();
+            menu.AppendAction($"Scan", a => AssetIndex.BuildIndex());
+            menu.AppendAction($"Clear Index Cache", a =>
+            {
+                bool dialogResult = EditorUtility.DisplayDialog("Clear Index Cache", "Are you sure you want to clear the index?", "Yes", "Cancel");
+                if (dialogResult)
+                    AssetIndex.ClearIndex();
+            });
+            //---------------------------------------------------------------
+            menu.AppendSeparator();
+            //---------------------------------------------------------------
+
+            string lastIndex = AssetIndex.IsIndexed ?
+                (AssetIndex.LastIndexSpan.TotalHours > 24 ?
+                AssetIndex.LastIndexTime.ToShortDateString().Replace('/', '-') :
+                AssetIndex.LastIndexTime.ToShortTimeString())
+                : "Never";
+            menu.AppendAction($"Last scan: {lastIndex}", a => { }, DropdownMenuAction.Status.Disabled);
+        }
         private void CreateScanWarningMessage(Toolbar toolbar)
         {
             m_ScanWarningMessage = new VisualElement();
@@ -132,10 +173,15 @@ namespace Farbod.Prefabbricato
 
             //Hide on double click
             m_ScanWarningMessage.pickingMode = PickingMode.Position;
+
+
+            //Dismiss
             m_ScanWarningMessage.RegisterCallback<ClickEvent>(evt =>
             {
                 if (evt.clickCount >= 2)
+                {
                     ShowScanWarningPrompt(false);
+                }
             });
 
             //Warning Image
@@ -147,55 +193,15 @@ namespace Farbod.Prefabbricato
             //Text
             m_ScanWarningPromptText = new Label(SCAN_WARNING_MSG);
             m_ScanWarningMessage.Add(m_ScanWarningPromptText);
+
+            var btn = new Button(() => AssetIndex.BuildIndex()) { text = "Scan"};
+            btn.AddToClassList("smallButton");
+            m_ScanWarningMessage.Add(btn);
         }
 
-        private void CreateScanMenuOptions(DropdownMenu menu)
-        {
-            menu.ClearItems();
-            menu.AppendAction($"Scan", a => AssetIndex.BuildIndex());
-            menu.AppendAction($"Clear Index Cache", a =>
-            {
-                bool dialogResult = EditorUtility.DisplayDialog("Clear Index Cache", "Are you sure you want to clear the index?", "Yes", "Cancel");
-                if(dialogResult)
-                    AssetIndex.ClearIndex();
-            });
-            //---------------------------------------------------------------
-            menu.AppendSeparator();
-            //---------------------------------------------------------------
-
-            string lastIndex = AssetIndex.IsIndexed ? 
-                (AssetIndex.LastIndexSpan.TotalHours > 24 ? 
-                AssetIndex.LastIndexTime.ToShortDateString().Replace('/','-'):
-                AssetIndex.LastIndexTime.ToShortTimeString())
-                : "Never";
-            menu.AppendAction($"Last scan: {lastIndex}", a => { }, DropdownMenuAction.Status.Disabled);
-        }
         
-        /// <summary>
-        /// Create a tab, with a scroll view inside and a visual element to contain its content
-        /// </summary>
-        /// <param name="title"></param>
-        /// <param name="tabView"></param>
-        /// <param name="ussClassName"></param>
-        /// <returns></returns>
-        Tab AddTab(string title, string ussClassName)
-        {
-            var tab  = new Tab(title);
-            tab.AddToClassList(ussClassName);
-
-            //Setting flex frow to 1 so the tab fill the entire panel
-            tab.style.flexGrow = 1;
-            tab.contentContainer.style.flexGrow = 1;
-
-            m_TabView.Add(tab);
-            return tab;
-        }
-
-        void PopulateProjectTab()
-        {
-            var content = m_ProjectDirTab.contentContainer;
-            content.Add(new Label("Directory"));
-        }
+        
+        
         
 
 
@@ -203,6 +209,11 @@ namespace Farbod.Prefabbricato
         {
             m_ScanWarningMessage.style.display = enabled ? DisplayStyle.Flex : DisplayStyle.None;
             m_ScanWarningPromptText.text = custom_message??SCAN_WARNING_MSG;
+
+            if (enabled)
+                m_ScanToolbarDropdown.AddToClassList("scan-warn-button");
+            else
+                m_ScanToolbarDropdown.RemoveFromClassList("scan-warn-button");
         }
     }
 }

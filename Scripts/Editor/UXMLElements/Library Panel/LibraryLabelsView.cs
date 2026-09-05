@@ -1,19 +1,24 @@
 ﻿using System;
 using UnityEditor.UIElements;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 using System.Collections.Generic;
 using Farbod.Prefabbricato.Backend;
-using static System.Net.Mime.MediaTypeNames;
-using static Farbod.Prefabbricato.IndexSavedDataManager;
-using System.Runtime.Remoting.Messaging;
-using static UnityEngine.Audio.ProcessorInstance.AvailableData;
-using System.Reflection;
 using System.Linq;
 
 namespace Farbod.Prefabbricato
 {
+    /// <summary>
+    /// <para>
+    /// A visual element used to display all available and indexed labels in the current project.
+    /// </para>
+    /// 
+    /// <!--
+    /// This Element uses the built in list view and some functions and methods that make it unsafe to use in versions under 2021.3, 
+    /// specifically due to RefreshItems().
+    /// -->
+    /// Tested with Unity 6.
+    /// </summary>
     public partial class LibraryLabelsView : VisualElement
     {
         private readonly static Color LABEL_COLOR_DEFAULT = Color.lightBlue;

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -10,10 +9,10 @@ namespace Farbod.Prefabbricato
 {
 
 
-    #if UNITY_2023_2_OR_NEWER
+#if UNITY_2023_2_OR_NEWER
     [UxmlElement]
-    #endif
-    public partial class PrefabInspectorView: VisualElement
+#endif
+    public partial class PrefabInspectorView : VisualElement
     {
         private readonly static string HEADER_TITLE = "Inspector";
         private readonly static int TAG_ADD_MAX_LENGTH = 16;
@@ -21,7 +20,7 @@ namespace Farbod.Prefabbricato
         private readonly static float TAG_COLOR_MAX_OPACITY = 0.3f;
 
         internal readonly static string ussClassName = "inspector-view";
-        private readonly static string m_contentUssClassName = ussClassName+"_content";
+        private readonly static string m_contentUssClassName = ussClassName + "_content";
         private readonly static string m_contentImageUssClassName = ussClassName + "_content__image";
         private readonly static string m_contentTitleUssClassName = ussClassName + "_content__title";
         private readonly static string m_TagContainerUssClassName = ussClassName + "_content__tags";
@@ -77,7 +76,7 @@ namespace Farbod.Prefabbricato
             //Toolbar dropdown menu
             var toolbarMenu = new ToolbarMenu();
             toolbarMenu.
-                Q(className:ToolbarMenu.arrowUssClassName)
+                Q(className: ToolbarMenu.arrowUssClassName)
                 .style.backgroundImage =
                 new StyleBackground(UIExtensions.GetEditorIcon("_Menu@2x"));
             m_ToolbarDropdown = toolbarMenu.menu;
@@ -89,12 +88,17 @@ namespace Farbod.Prefabbricato
 
             ///Scroll view to wrap the content container
             ///Just in case our height is too little
-            var content_scroll = new ScrollView();
+            ScrollView content_scroll = new ScrollView
+            {
+                mode = ScrollViewMode.Vertical,
+                verticalScrollerVisibility = ScrollerVisibility.Auto,
+                style = {
+                    flexGrow = 1,
+                    overflow = Overflow.Hidden,
+
+                }
+            };
             content_scroll.AddToClassList(m_contentUssClassName + "__scroll");
-            content_scroll.mode = ScrollViewMode.Vertical;
-            content_scroll.verticalScrollerVisibility = ScrollerVisibility.Auto;
-            content_scroll.style.flexGrow = 1;
-            content_scroll.style.overflow = Overflow.Hidden;
             hierarchy.Add(content_scroll);
 
             //Main content wrapper
@@ -107,7 +111,7 @@ namespace Farbod.Prefabbricato
             m_ContentImage.scaleMode = ScaleMode.ScaleAndCrop;
             var imageWrapper = new VisualElement(); //Wrapper
             imageWrapper.AddToClassList(m_contentImageUssClassName); //Add classname to wrapper
-             
+
             imageWrapper.Add(m_ContentImage); //Add image to wrapper
             m_Content.Add(imageWrapper); //Add wrapper to content
 
@@ -131,7 +135,7 @@ namespace Farbod.Prefabbricato
 #endif
             m_AddTagField.AddToClassList(m_TagFieldUssClassName);
             //Add tag from field when field is submitted
-            m_AddTagField.RegisterCallback<KeyDownEvent>(evt=>CatchFieldSubmit(evt, AddTagFromField), TrickleDown.TrickleDown);
+            m_AddTagField.RegisterCallback<KeyDownEvent>(evt => CatchFieldSubmit(evt, AddTagFromField), TrickleDown.TrickleDown);
 
             info.Add(m_AddTagField);
 
@@ -140,7 +144,7 @@ namespace Farbod.Prefabbricato
             m_AddTagButton.text = "+";
             m_AddTagButton.clicked += AddTagFromField;
 
-            m_AddTagField.Q(className:"unity-text-field").Add(m_AddTagButton);
+            m_AddTagField.Q(className: "unity-text-field").Add(m_AddTagButton);
 
             //Tag container
             m_ContentTagContainer = new VisualElement();
@@ -157,8 +161,8 @@ namespace Farbod.Prefabbricato
             m_Content.SetEnabled(true);
 
             m_ContentImage.image = preview ?? null;
-            m_ContentTitle.text = !string.IsNullOrEmpty(title)?title: "Nothing To Show";
-            this.onLabelsChange=onTagsChange;
+            m_ContentTitle.text = !string.IsNullOrEmpty(title) ? title : "Nothing To Show";
+            this.onLabelsChange = onTagsChange;
         }
 
         /// <summary>
@@ -180,7 +184,8 @@ namespace Farbod.Prefabbricato
             }
         }
 
-        private void AddTag(string text, Color? color, bool canRemove = true) {
+        private void AddTag(string text, Color? color, bool canRemove = true)
+        {
 
             if (string.IsNullOrEmpty(text) || activeTags.ContainsKey(text))
                 return;
@@ -197,9 +202,9 @@ namespace Farbod.Prefabbricato
             tag.Add(label);
 
             //Remove button + callback
-            if(canRemove)
+            if (canRemove)
             {
-                Button remove_button = new(()=>RemoveTag(text));
+                Button remove_button = new(() => RemoveTag(text));
                 remove_button.text = "x";
                 remove_button.tooltip = "Remove label from asset";
                 tag.Add(remove_button);
@@ -216,7 +221,7 @@ namespace Farbod.Prefabbricato
             #endregion
 
 
-            
+
 
             activeTags.Add(text, tag);
             onLabelsChange?.Invoke(activeTags.Keys.ToArray());
