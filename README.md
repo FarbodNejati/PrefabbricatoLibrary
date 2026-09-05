@@ -6,14 +6,13 @@ By utilizing these asset labels, finding the right prop or NPC to place in your 
 
 <img width="600" alt="Library User Interface" src="https://github.com/user-attachments/assets/7600f662-3849-4e85-8ce3-04b7fb4a2baa" />
 
-#WIP
+
 >[!WARNING]
 >WORK IN PROGRESS. NOT FOR USE AT THE MOMENT.
 
-Todo:
-[] Prefab List View
-[] Prefab Inspector + Labeling
-[] AssetPostProcessor monitoring (Prefab removed, added, moved, labels modified)
+- [ ] Prefab List View
+- [ ] Prefab Inspector + Labeling
+- [ ] AssetPostProcessor monitoring (Prefab removed, added, moved, labels modified)
 
 # Installation
 Install the latest release by opening the package  manager and installing by git url and entering the following:
