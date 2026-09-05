@@ -32,6 +32,7 @@ namespace Farbod.Prefabbricato
             }
 
             //Saved fields
+            [SerializeField]
             private string lastIndexBuildTime;
 
             // Serialized field for JSON
@@ -105,6 +106,11 @@ namespace Farbod.Prefabbricato
             var data = JsonUtility.FromJson<IndexData>(json);
             data?.PrepareForRuntime();
             return data;
+        }
+        public static void ClearIndexData()
+        {
+            if (File.Exists(INDEX_DATA_PATH))
+                File.WriteAllText(INDEX_DATA_PATH, "");
         }
     }
 }

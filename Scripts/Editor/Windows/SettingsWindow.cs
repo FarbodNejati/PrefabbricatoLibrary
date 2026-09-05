@@ -2,7 +2,6 @@ using Farbod.Prefabbricato.Backend;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
-using UnityEditor.PackageManager.UI;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -16,10 +15,12 @@ namespace Farbod.Prefabbricato
         static readonly string WINDOW_ICON_CONTENT = "Settings@2x";
         static readonly string WINDOW_TITLE = "Prefabbricato Settings";
         static readonly Vector2 WINDOW_MIN_SIZE = new(260, 180);
-        static readonly Vector2 WINDOW_MAX_SIZE = new(400, 600);
-        
+        static readonly Vector2 WINDOW_MAX_SIZE = new(400, 500);
+
         //Config
         private readonly static Color LABEL_COLOR_DEFAULT = Color.mediumAquamarine;
+        private const string LABELS_LIST_EMPTY_TEXT = "No labels registered";
+        private static string LABELS_LIST_NO_RESULT(string query) => $"No result for '{query}'";
 
         //Uss
         internal readonly static string ussClassName = "settings-view";
@@ -33,6 +34,7 @@ namespace Farbod.Prefabbricato
         Button m_PathChangeButton;
 
         ListView m_LabelsList;
+        Label m_ListEmptyLabel;
         ToolbarSearchField m_LabelsSearchField;
 
         private Dictionary<string, Color?> m_LabelEntries;
@@ -117,7 +119,7 @@ namespace Farbod.Prefabbricato
             m_LabelsSearchField.style.width = new StyleLength(StyleKeyword.Auto);
             m_LabelsSearchField.RegisterValueChangedCallback(evt =>
             {
-                UpdateList(evt.newValue);
+                UpdateListView(evt.newValue);
             });
 
 
@@ -131,19 +133,36 @@ namespace Farbod.Prefabbricato
             content.Add(m_LabelsList);
             #endregion
         }
-        private void UpdateList(string query = null)
+
+        private void UpdateListView(string query = null)
         {
-            if (query != null)
-            {
-                m_LabelsSearchField?.SetValueWithoutNotify(query);
-            }
             // Update filtered entries based on search text
-            UpdateFilteredEntries(query ?? m_LabelsSearchField.value);
+            FiltersShownEntries(query ?? m_LabelsSearchField.value);
+            //Ensure search field matches new query.
+            //dont notify since m_LabelsSearchField calls this method on ValueChanged
+            m_LabelsSearchField?.SetValueWithoutNotify(query);
 
             // Refresh the list view
             m_LabelsList.RefreshItems();
+
+            //If there are no entries being shown
+            if (m_ShownLabelEntries.Count == 0)
+            {
+                m_ListEmptyLabel = m_LabelsList.Q<Label>(className: "unity-list-view__empty-label");
+
+
+                //If there are label entries but queryturns up nothing
+                if (m_ShownLabelEntries.Count == 0 && m_LabelEntries.Count != 0)
+                    m_ListEmptyLabel.text = LABELS_LIST_NO_RESULT(query);
+                else
+                    m_ListEmptyLabel.text = LABELS_LIST_EMPTY_TEXT;
+            }
         }
-        private void UpdateFilteredEntries(string searchText)
+        /// <summary>
+        /// Filter m_LabelEntries(all) by search query and add them to m_ShownLabelEntries(filtered)
+        /// </summary>
+        /// <param name="searchText"></param>
+        private void FiltersShownEntries(string searchText)
         {
             if (m_LabelEntries == null || m_LabelEntries.Count == 0)
                 return;
@@ -163,6 +182,7 @@ namespace Farbod.Prefabbricato
             m_LabelsList = new();
             m_LabelsList.style.flexGrow = 1;
             m_LabelsList.AddToClassList(m_labelListUssClassName);
+
             // Initialize filtered list
             m_ShownLabelEntries = new List<KeyValuePair<string, Color?>>();
 
@@ -260,7 +280,7 @@ namespace Farbod.Prefabbricato
         {
             //First get user assigned label colors
             m_LabelEntries = LabelUtilities.GetProjectLabels(LabelSelection.IndexedAndColorAssigned);
-            UpdateList();
+            UpdateListView();
         }
         private void SaveActiveColorEntries()
         {
@@ -288,7 +308,7 @@ namespace Farbod.Prefabbricato
         }
         private void PingLabelInList(string label)
         {
-            UpdateList("");
+            UpdateListView("");
             int index = m_ShownLabelEntries.FindIndex(kvp => kvp.Key == label);
             if (index >= 0 && index < m_ShownLabelEntries.Count)
             {
@@ -303,7 +323,7 @@ namespace Farbod.Prefabbricato
         /// <param name="label"></param>
         public static void PingLabel(string label)
         {
-			ShowWindow();
+            ShowWindow();
             var wnd = GetWindow<SettingsWindow>();
             wnd.PingLabelInList(label);
         }

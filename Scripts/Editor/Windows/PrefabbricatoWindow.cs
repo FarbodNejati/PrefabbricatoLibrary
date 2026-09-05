@@ -7,11 +7,13 @@ namespace Farbod.Prefabbricato
 {
     public class PrefabbricatoWindow : EditorWindow
     {
+        //Window config
         static readonly string UXML_RESOURCE_PATH = "UXML/PrefabbricatoLibrary";
         static readonly string STYLESHEET_RESOURCE_PATH = "Style/PrefabbricatoLibraryStyle";
         static readonly string WINDOW_ICON_CONTENT = "FilterByLabel";
         static readonly string WINDOW_TITLE = "Prefabbricato";
         static readonly Vector2 WINDOW_MIN_SIZE = new(500, 400);
+
 
         static readonly string m_GetStartedOverlayUssClassName = "getting-started";
         static readonly string m_GetStartedButtonUssClassName = "getting-started_button";
@@ -22,7 +24,7 @@ namespace Farbod.Prefabbricato
 
         /*private SettingsView m_SettingsView;*/
         private PrefabInspectorView m_Inspector;
-        private PrefabbricatoLibraryView m_LibraryView;
+        private LibraryView m_LibraryView;
 
         /// <summary>
         /// The menu item available in the editor toolbar for opening this window.
@@ -82,7 +84,7 @@ namespace Farbod.Prefabbricato
             //m_SettingsView?.Close();
 
             //Hook up library view
-            m_LibraryView = root.Q<PrefabbricatoLibraryView>(name: "library-pane");
+            m_LibraryView = root.Q<LibraryView>(name: "library-pane");
             
 
             //Inspector
@@ -110,7 +112,7 @@ namespace Farbod.Prefabbricato
             PrefabbricatoSettings.onLibraryChange += (p) =>
             {
                 ShowStartMenu(m_Root, !CheckStartup());
-                m_LibraryView?.SetScanWarningPromptEnabled(true);
+                m_LibraryView?.ShowScanWarningPrompt(true, "Library relocated, Scan needed!");
             };
             OnIndexUpdate();
             //Update Scan needed warning when index is updated.
@@ -132,7 +134,15 @@ namespace Farbod.Prefabbricato
         void OnIndexUpdate()
         {
             //Scan needed warning
-            m_LibraryView?.SetScanWarningPromptEnabled(!AssetIndex.IsIndexed);
+            if(!AssetIndex.IsIndexed)
+                m_LibraryView?.ShowScanWarningPrompt(true);
+            //If indexed, but index is stale.
+            else if(AssetIndex.IsStale)
+                m_LibraryView?.ShowScanWarningPrompt(true, $"Last scan was {AssetIndex.LastIndexSpan.ToShortString()}");
+            //Hide scan warning
+            else
+                m_LibraryView?.ShowScanWarningPrompt(false);
+
             //Library registered labels
             m_LibraryView?.LibraryLabelsView.SetLabels(LabelUtilities.GetProjectLabels());
             //Library project folders

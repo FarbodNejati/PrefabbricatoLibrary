@@ -7,7 +7,7 @@ using UnityEngine;
 namespace Farbod.Prefabbricato.Backend
 {
     /// <summary>
-    /// User settings for the Prefabbricato library
+    /// Project wide settings for the Prefabbricato library
     /// </summary>
     [FilePath("Prefabbricato/Settings.json", FilePathAttribute.Location.ProjectFolder)]
     public class PrefabbricatoSettings : ScriptableSingleton<PrefabbricatoSettings>

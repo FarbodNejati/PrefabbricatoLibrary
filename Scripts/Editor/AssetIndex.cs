@@ -9,12 +9,34 @@ namespace Farbod.Prefabbricato.Backend
 {
     internal static class AssetIndex
     {
-        private static string DefaultScanPath => PrefabbricatoSettings.LibraryPath;
+        /// <summary>
+        /// The path used for finding and indexing assets.
+        /// </summary>
+        private static string DEFAULT_SCAN_PATH => PrefabbricatoSettings.LibraryPath;
+
+        /// <summary>
+        /// At how many days is the asset index considered stale?
+        /// </summary>
+        private static readonly int INDEX_STALE_THRESHOLD_DAYS = 7;
+        internal static bool IsStale => IsIndexed?LastIndexSpan.TotalDays>INDEX_STALE_THRESHOLD_DAYS: false;
+
         /// <summary>
         /// Has our index been built at least once?
         /// </summary>
         internal static bool IsIndexed { get; private set; }
-        internal static DateTime LastIndexTime { get; private set; }
+
+        internal static DateTime m_LastIndexTime;
+        internal static DateTime LastIndexTime {
+            get => m_LastIndexTime;
+            set {
+                m_LastIndexTime = value;
+            }
+        }
+        /// <summary>
+        /// How long ago the last indexing scan operation took place
+        /// </summary>
+        internal static TimeSpan LastIndexSpan => DateTime.Now - m_LastIndexTime;
+
         /// <summary>
         /// Each string Label name points to a hashset that has all indexed prefab GUIDs
         /// </summary>
@@ -28,7 +50,7 @@ namespace Farbod.Prefabbricato.Backend
         /// <summary>
         /// Each indexed Prefab GUID to its data.
         /// </summary>
-        internal static Dictionary<string, HashSet<string>> AssetGUIDToAssetDataIndex { get; private set; } = new();
+        //internal static Dictionary<string, HashSet<string>> AssetGUIDToAssetDataIndex { get; private set; } = new();
 
         internal static event Action onIndexUpdate;
 
@@ -46,14 +68,16 @@ namespace Farbod.Prefabbricato.Backend
             //Load data from disk
             var savedData = IndexSavedDataManager.LoadIndexData();
 
+
+
             //Check if we should load this data
             //(index data not null, and has assets indexed in it)
-            if(savedData?.labelToAssetIndex?.Count>0)
+            if (savedData?.labelToAssetIndex!=null)
             {
                 IsIndexed = true;
 
                 //Load last index time
-                LastIndexTime = DateTime.Now;
+                LastIndexTime = savedData.LastIndexBuildTime;
 
                 //Load label to asset guid index
                 LabelToAssetIndex = new();
@@ -77,7 +101,7 @@ namespace Farbod.Prefabbricato.Backend
         internal static void BuildIndex(string path = null)
         {
             if (path == null)
-                path = DefaultScanPath;
+                path = DEFAULT_SCAN_PATH;
 
             //Check Directory validity
             if (!AssetDatabase.IsValidFolder(path))
@@ -171,6 +195,17 @@ namespace Farbod.Prefabbricato.Backend
 
             return reversed;
         }
+
+        internal static void ClearIndex()
+        {
+            IsIndexed = false;
+            LastIndexTime = default;
+            LabelToAssetIndex.Clear();
+            AssetToLabelIndex.Clear();
+            IndexSavedDataManager.ClearIndexData();
+
+            onIndexUpdate?.Invoke();
+        }
     }
 
     internal class PrefabData
@@ -213,6 +248,27 @@ namespace Farbod.Prefabbricato.Backend
             data.assetPath = AssetDatabase.GetAssetPath(prefab);
 
             return data;
+        }
+    }
+
+    public static class TimeSpanExtensions
+    {
+        public static string ToShortString(this TimeSpan self)
+        {
+            if(self==null) 
+                return null;
+            if (self.TotalSeconds < 60)
+                return $"{self.Seconds} seconds ago";
+            else if (self.TotalMinutes < 60)
+                return $"{self.Minutes} minutes ago";
+            else if (self.TotalHours < 24)
+                return $"{self.Hours} hours ago";
+            else if (self.TotalDays < 30)
+                return $"{self.Days} days ago";
+            else if (self.TotalDays < 90)
+                return $"{Mathf.FloorToInt(self.Days / 30)} months ago";
+            else
+                return $"A long time ago";
         }
     }
 }

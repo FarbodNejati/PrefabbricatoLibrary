@@ -1,4 +1,5 @@
-
+:root {
+}
 
 Toolbar ToolbarButton {
     border-left-width: 0;
@@ -88,7 +89,6 @@ Toolbar ToolbarButton .unity-button__image {
 
 .settings-view Toolbar {
     overflow: hidden;
-    --unity-colors-alternated_rows-background: rgb(255, 0, 0);
     background-color: var(--unity-colors-app_toolbar-background);
 }
 
@@ -143,7 +143,6 @@ Toolbar ToolbarButton .unity-button__image {
 }
 
 .settings-view .unity-search-field-base {
-    --unity-colors-alternated_rows-background: rgb(255, 0, 0);
     margin-top: 4px;
 }
 
@@ -165,16 +164,22 @@ Toolbar ToolbarButton .unity-button__image {
     border-right-color: var(--unity-colors-box-border);
     border-bottom-color: var(--unity-colors-box-border);
     border-left-color: var(--unity-colors-box-border);
-    --unity-colors-alternated_rows-background: rgb(255, 0, 0);
+    background-color: var(--unity-colors-default-background);
 }
 
 .settings-view .settings-view_labels .unity-list-view__empty-label {
 }
 
-.settings-view .settings-view_labels .unity-collection-view__item:hover {
+.settings-view .settings-view_labels .unity-collection-view__item--alternative-background {
+    background-color: rgba(99, 99, 99, 0.09);
 }
 
-.settings-view .settings-view_labels .unity-collection-view__item--alternative-background {
+.settings-view .settings-view_labels .unity-collection-view__item:hover {
+    background-color: var(--unity-colors-highlight-background-hover);
+}
+
+.settings-view .settings-view_labels .unity-collection-view__item.unity-collection-view__item--selected {
+    background-color: var(--unity-colors-highlight-background);
 }
 
 .label-control > .unity-toggle {
@@ -187,7 +192,6 @@ Toolbar ToolbarButton .unity-button__image {
 }
 
 .settings-view .settings-view_labels-section-header {
-    --unity-colors-alternated_rows-background: rgb(255, 0, 0);
     margin-top: 8px;
     -unity-text-align: upper-center;
     -unity-font-style: bold;

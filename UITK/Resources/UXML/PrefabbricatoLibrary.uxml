@@ -2,14 +2,14 @@
     <Style src="project://database/Assets/PrefabrricatoLibrary/UITK/Resources/Style/PrefabbricatoLibraryStyle.uss?fileID=7433441132597879392&amp;guid=8d6276f758df3b94e8f7890dfd3ec576&amp;type=3#PrefabbricatoLibraryStyle"/>
     <Style src="project://database/Assets/PrefabrricatoLibrary/UITK/Resources/Style/LibraryPaneStyle.uss?fileID=7433441132597879392&amp;guid=b17084bd5cd453f4fbf543d7444f15bf&amp;type=3#LibraryPaneStyle"/>
     <Style src="project://database/Assets/PrefabrricatoLibrary/UITK/Resources/Style/PrefabbricatoPrefabViewStyle.uss?fileID=7433441132597879392&amp;guid=654698d3189c4414abcf98a000b52726&amp;type=3#PrefabbricatoPrefabViewStyle"/>
-    <Farbod.Prefabbricato.SplitView orientation="Horizontal" name="SplitView" fixed-pane-initial-dimension="190" fixed-pane-index="0">
-        <Farbod.Prefabbricato.SplitView orientation="Vertical" name="fixed-pane" fixed-pane-initial-dimension="160" fixed-pane-index="1">
-            <Farbod.Prefabbricato.PrefabInspectorView/>
-            <Farbod.Prefabbricato.PrefabbricatoLibraryView name="library-pane"/>
-        </Farbod.Prefabbricato.SplitView>
+    <Farbod.Prefabbricato.SplitView orientation="Horizontal" name="main-split" fixed-pane-initial-dimension="200" fixed-pane-index="1">
         <ui:VisualElement name="prefabs-view_pane">
             <Farbod.Prefabbricato.PrefabListView/>
         </ui:VisualElement>
+        <Farbod.Prefabbricato.SplitView orientation="Vertical" name="fixed-pane" fixed-pane-initial-dimension="160" fixed-pane-index="1">
+            <Farbod.Prefabbricato.PrefabInspectorView/>
+            <Farbod.Prefabbricato.LibraryView name="library-pane"/>
+        </Farbod.Prefabbricato.SplitView>
     </Farbod.Prefabbricato.SplitView>
     <ui:VisualElement name="getting-started" class="getting-started" style="display: none;">
         <ui:VisualElement class="background"/>
