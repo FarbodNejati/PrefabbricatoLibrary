@@ -2,7 +2,7 @@ A *Unity Editor Tool* to easily organizing your Prefabs for **Level Design**.
 
 This tool uses **Asset Labels** to tag Prefabs, helping you find the right Prop, NPC, or Effect Prefabs in no time!
 
-<img width="760" alt="Library User Interface" src="https://github.com/user-attachments/assets/7600f662-3849-4e85-8ce3-04b7fb4a2baa" />
+<img width="760" alt="Library User Interface"  src="https://github.com/user-attachments/assets/ba39fd2d-566c-42bf-bae2-e03cf3f8c0ae" />
 
 >[!WARNING]
 >WORK IN PROGRESS. NOT FOR USE AT THE MOMENT.
