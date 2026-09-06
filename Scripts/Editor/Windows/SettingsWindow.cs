@@ -21,7 +21,7 @@ namespace Farbod.Prefabbricato
         //Config
         private readonly static Color LABEL_COLOR_DEFAULT = Color.mediumAquamarine;
         private const string LABELS_LIST_EMPTY_TEXT = "No labels registered";
-        private static string LABELS_LIST_NO_RESULT(string query) => $"No result for '{query}'";
+        private static string LABELS_LIST_NO_RESULT(string q) => "No results for query";
 
         //Uss
         internal readonly static string ussClassName = "settings-view";
@@ -280,7 +280,7 @@ namespace Farbod.Prefabbricato
                 string query = m_LabelsSearchField.value;
                 if (query != "" && m_LabelEntries.Count != 0)
                     emptyLabel.text = LABELS_LIST_NO_RESULT(query);
-                else if (m_LabelEntries.Count == 0)
+                else if (m_LabelEntries == null || m_LabelEntries.Count == 0)
                     emptyLabel.text = LABELS_LIST_EMPTY_TEXT;
 
                 return emptyLabel;

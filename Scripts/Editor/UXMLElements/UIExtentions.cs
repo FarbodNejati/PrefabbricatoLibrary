@@ -1,4 +1,5 @@
 ﻿using UnityEditor;
+using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -38,6 +39,19 @@ namespace Farbod.Prefabbricato
                 e.AddToClassList(Button.ussClassName);
                 e.AddToClassList(ToggleButtonGroup.buttonClassName);
             });
+        }
+
+        public static ToolbarMenu WithIcon(this ToolbarMenu self, string iconContent)
+        {
+            var img = GetEditorIcon(iconContent);
+            if(img == null)
+                return self;
+
+            self.
+                Q(className: ToolbarMenu.arrowUssClassName)
+                .style.backgroundImage = img;
+
+            return self;
         }
     }
 }

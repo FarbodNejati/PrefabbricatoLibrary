@@ -121,6 +121,7 @@ SplitView #prefabs-view_pane {
     overflow: hidden;
     align-items: flex-end;
     min-width: 50%;
+    margin-right: -2px;
 }
 
 SplitView #fixed-pane {
@@ -136,6 +137,56 @@ SplitView #fixed-pane Toolbar {
 #library-pane {
     height: 200px;
     min-height: 16px;
+}
+
+.asset-label {
+    margin-right: 4px;
+    margin-top: 2px;
+    margin-left: 4px;
+    border-width: 1px;
+    font-size: var(--unity-metrics-default-font_semi_small_size);
+    align-items: center;
+    margin-bottom: 2px;
+    height: 18px;
+    padding-left: 2px;
+    flex-direction: row;
+    border-top-right-radius: var(--unity-metrics-default-border_radius);
+    border-bottom-right-radius: var(--unity-metrics-default-border_radius);
+    border-top-left-radius: var(--unity-metrics-default-border_radius);
+    border-bottom-left-radius: var(--unity-metrics-default-border_radius);
+}
+
+.asset-label:enabled:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.asset-label > .asset-label__name {
+    text-overflow: ellipsis;
+    flex-grow: 1;
+}
+
+.asset-label > .asset-label__remove {
+    padding: 0;
+    margin-left: 0;
+    margin-right: -1px;
+    margin-top: 0;
+    margin-bottom: 0;
+    border-width: 1px;
+    background-color: transparent;
+    border-color: transparent;
+    -unity-text-align: middle-center;
+    padding-bottom: 1.5px;
+    width: var(--unity-metrics-single_line-height);
+    height: var(--unity-metrics-single_line-height);
+    border-top-right-radius: var(--unity-metrics-default-border_radius);
+    border-bottom-right-radius: var(--unity-metrics-default-border_radius);
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    opacity: 0.6;
+}
+
+.asset-label:enabled:hover > .asset-label__remove {
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
 .inspector-view {
@@ -207,54 +258,18 @@ SplitView #fixed-pane Toolbar {
 .inspector-view .inspector-view_content__labels {
     flex-direction: row;
     flex-wrap: wrap;
-    padding-left: 2px;
+    padding-left: 4px;
 }
 
-.inspector-view .inspector-view_content__labels > .asset-label {
-    margin-right: 2px;
+.inspector-view .asset-label {
+    margin-right: 4px;
     margin-top: 2px;
-    margin-left: 2px;
-    border-radius: var(--unity-metrics-default-border_radius);
+    margin-left: 0;
     border-color: rgba(255, 255, 255, 0.1);
     border-width: 1px;
-    font-size: var(--unity-metrics-default-font_semi_small_size);
-    -unity-text-align: middle-center;
-    align-items: center;
     margin-bottom: 2px;
     flex-grow: 0;
     flex-direction: row;
-    height: var(--unity-metrics-single_line-height);
-}
-
-.inspector-view .inspector-view_content__labels > .asset-label > Label {
-    padding-left: 4px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    flex-shrink: 1;
-}
-
-.inspector-view .inspector-view_content__labels > .asset-label > Button {
-    padding: 0;
-    margin-left: 0;
-    margin-right: -1px;
-    margin-top: 0;
-    margin-bottom: 0;
-    border-width: 1px;
-    background-color: transparent;
-    border-color: transparent;
-    -unity-text-align: middle-center;
-    padding-bottom: 1.5px;
-    width: var(--unity-metrics-single_line-height);
-    height: var(--unity-metrics-single_line-height);
-    border-top-right-radius: var(--unity-metrics-default-border_radius);
-    border-bottom-right-radius: var(--unity-metrics-default-border_radius);
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-    opacity: 0.6;
-}
-
-.inspector-view .inspector-view_content__labels > .asset-label:hover > Button {
-    background-color: rgba(255, 255, 255, 0.1);
 }
 
 .inspector-view .inspector-view_content__labels > .asset-label > Button:enabled:hover {
@@ -319,3 +334,5 @@ SplitView #fixed-pane Toolbar {
     border-right-color: var(--unity-colors-input_field-border-focus);
     border-bottom-color: var(--unity-colors-input_field-border-focus);
 }
+
+

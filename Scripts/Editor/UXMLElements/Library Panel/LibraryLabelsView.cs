@@ -21,10 +21,8 @@ namespace Farbod.Prefabbricato
     /// </summary>
     public partial class LibraryLabelsView : VisualElement
     {
-        private readonly static Color LABEL_COLOR_DEFAULT = Color.lightBlue;
-        private readonly static float TAG_COLOR_MAX_OPACITY = 0.15f;
         private readonly static string m_AssetLabelUssClassName = "asset-label";
-        private readonly static string m_LabelNameUssClassName = m_AssetLabelUssClassName + "_name";
+        //private readonly static string m_LabelNameUssClassName = m_AssetLabelUssClassName + "_name";
         private readonly static string m_LabelCounterUssClassName = m_AssetLabelUssClassName+"_counter";
 
         private static Background m_LabelIconImage = UIExtensions.GetEditorIcon("FilterByLabel");
@@ -62,21 +60,22 @@ namespace Farbod.Prefabbricato
             #region template
             var container = new VisualElement();
 
-            var entry = new VisualElement();
+            //var entry = new VisualElement();
+            var entry = new AssetLabelElement() { colorIntensity = 0.1f };
             container.Add(entry);
-            entry.AddToClassList(m_AssetLabelUssClassName);
+            //entry.AddToClassList(m_AssetLabelUssClassName);
 
             //Label icon
-            var icon = new VisualElement();
-            icon.style.width = icon.style.height = 12;
-            icon.style.backgroundImage = m_LabelIconImage;
-            entry.Add(icon);
+            //var icon = new VisualElement();
+            //icon.style.width = icon.style.height = 12;
+            //icon.style.backgroundImage = m_LabelIconImage;
+            //entry.Add(icon);
 
             //Label name
-            var nameLabel = new Label("label");
-            nameLabel.AddToClassList(m_LabelNameUssClassName);
-            nameLabel.style.flexGrow = 1;
-            entry.Add(nameLabel);
+            //var nameLabel = new Label("label");
+            //nameLabel.AddToClassList(m_LabelNameUssClassName);
+            //nameLabel.style.flexGrow = 1;
+            //entry.Add(nameLabel);
 
             //Label counter
             var counter = new Label("N/A");
@@ -133,14 +132,10 @@ namespace Farbod.Prefabbricato
 
             string name = entry.Key;
             var color = entry.Value;
-            //Set label entry background color
-
-            var modifiedColor = color.HasValue ? color.Value : LABEL_COLOR_DEFAULT;
-            modifiedColor.a = Mathf.Min(modifiedColor.a, TAG_COLOR_MAX_OPACITY);
-            element.Q(className:m_AssetLabelUssClassName).style.backgroundColor = modifiedColor; //Dont apply directly to list entry
+            element.Q<AssetLabelElement>().SetColor(color);
 
             //Set label name
-            element.Q<Label>(className: m_LabelNameUssClassName).text = name;
+            element.Q<Label>(className: AssetLabelElement.nameUssClassName).text = name;
 
             //Set label counter
             AssetIndex.LabelToAssetIndex.TryGetValue(name, out var hashset);//Get Asset count

@@ -1,14 +1,19 @@
 ﻿using Farbod.Prefabbricato.Backend;
 using System;
 using System.Collections.Generic;
-using UnityEditor;
-using UnityEditor.Experimental.GraphView;
 using UnityEditor.UIElements;
-using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Farbod.Prefabbricato
 {
+    internal enum PrefabViewMode
+    {
+        CompactList,
+        List,
+        CompactGrid,
+        Grid
+    }
+
     /// <summary>
     /// The Element used to display a set of Prefabs.
     /// You can multi-select Prefabs in this view to perform batch operations.
@@ -20,24 +25,32 @@ namespace Farbod.Prefabbricato
         static readonly string STYLESHEET_RESOURCE_PATH = "Style/PrefabbricatoPrefabViewStyle";
         static readonly string EMPTY_LABEL_MESSAGE = "List is empty";
         //USS
-        internal readonly static string ussClassName = PrefabPanelView.ussClassName+"_tab";
+        internal readonly static string ussClassName = PrefabPanelView.ussClassName + "_tab";
         internal readonly static string emptyLabelUssClassName = PrefabPanelView.ussClassName + "__empty-label";
         //Elements
-        ScrollView m_Scroll;
-        Label m_EmptyLabel;
-        private DropdownMenu m_ToolbarDropdown;
+
+        private VisualElement m_ViewContainer;
+        private Label m_EmptyLabel;
+        private ToolbarMenu m_ViewModeMenu;
         private ToolbarSearchField m_SearchField;
-        public override VisualElement contentContainer => m_Scroll.contentContainer;
+        private readonly Dictionary<PrefabViewMode, IPrefabCollectionView> m_Views = new();
 
         //Script
+        private PrefabViewMode m_ViewMode = PrefabViewMode.CompactList;
+        private IPrefabCollectionView m_ActiveView;
+
+
+        internal event Action<IReadOnlyList<PrefabData>> selectionChanged;
+        internal event Action<PrefabData> itemDoubleClicked;
+        internal event Action<string> labelClicked;
+        internal event Action<string, ContextualMenuPopulateEvent> labelContextMenu;
+
+
         private List<PrefabData> m_Data = new();
         internal List<PrefabData> Data
         {
             get => m_Data;
-            set {
-                m_Data= value??new();
-                Refresh();
-            }
+            set { m_Data = value ?? new(); Refresh(); }
         }
 
         internal PrefabsTab(Tab tab, Func<string, PrefabData> onSearch)
@@ -46,90 +59,95 @@ namespace Farbod.Prefabbricato
             AddToClassList(ussClassName);
             PopulateElement();
 
+            SetViewMode(m_ViewMode);
             Refresh();
         }
         private void PopulateElement()
         {
-            //Header Toolbar
             CreateToolbar();
-
-            //Scroll view
-            m_Scroll = new()
-            {
-                mode = ScrollViewMode.Vertical,
-                verticalPageSize = 400,
-                verticalScrollerVisibility = ScrollerVisibility.Auto,
-                horizontalScrollerVisibility = ScrollerVisibility.Hidden,
-                style =
-                {
-                    flexGrow = 1,
-                }
-            };
-            hierarchy.Add(m_Scroll);
+            m_ViewContainer = new VisualElement { style = { flexGrow = 1 } };
+            hierarchy.Add(m_ViewContainer);
         }
         private void CreateToolbar()
         {
             var toolbar = new Toolbar();
-            
+
             //Toolbar dropdown menu
-            var toolbarMenu = new ToolbarMenu();
-            toolbarMenu.
-                Q(className: ToolbarMenu.arrowUssClassName)
-                .style.backgroundImage =
-                UIExtensions.GetEditorIcon("_Menu@2x");
-            m_ToolbarDropdown = toolbarMenu.menu;
-            
+            var toolbarMenu = new ToolbarMenu() { tooltip = "Options" }.WithIcon("_Menu@2x");
+            toolbarMenu.SetEnabled(false);
+
+            //Viewmode menu
+            m_ViewModeMenu = new ToolbarMenu() { tooltip= "View mode" }.WithIcon("d_ListView@2x");
+            BuildViewModeMenu();
+
             //Toolbar flex space
             var toolbar_space = new ToolbarSpacer();
             toolbar_space.style.flexGrow = 1;
-            
+
             //Search bar
             m_SearchField = new ToolbarSearchField();
 
             hierarchy.Add(toolbar);
             toolbar.Add(toolbarMenu);
+            toolbar.Add(m_ViewModeMenu);
             toolbar.Add(toolbar_space);
             toolbar.Add(m_SearchField);
         }
 
+        private void SetViewMode(PrefabViewMode mode)
+        {
+            m_ViewMode = mode;
+            //m_ViewModeMenu.text = GetViewModeLabel(mode);
+            BuildViewModeMenu();
+
+            if (m_ActiveView != null)
+                m_ViewContainer.Remove(m_ActiveView.Self);
+
+            m_ActiveView = GetOrCreateView(mode);
+            m_ViewContainer.Add(m_ActiveView.Self);
+            m_ActiveView.SetData(m_Data);
+        }
+
+        private IPrefabCollectionView GetOrCreateView(PrefabViewMode mode)
+        {
+            if (m_Views.TryGetValue(mode, out var existing))
+                return existing;
+
+            IPrefabCollectionView view = mode switch
+            {
+                //PrefabViewMode.CompactList => new PrefabCompactListView(),
+                //PrefabViewMode.List => new PrefabListView(),
+                //PrefabViewMode.CompactGrid => new PrefabCompactGridView(),
+                //PrefabViewMode.Grid => new PrefabGridView(),
+                _ => new PrefabCompactListView()
+            };
+
+            view.selectionChanged += items => selectionChanged?.Invoke(items);
+            view.itemDoubleClicked += data => itemDoubleClicked?.Invoke(data);
+            view.assetLabelClicked += name => labelClicked?.Invoke(name);
+            view.labelContextMenu += (name, evt) => labelContextMenu?.Invoke(name, evt);
+
+            m_Views[mode] = view;
+            return view;
+        }
+        void BuildViewModeMenu()
+        {
+            m_ViewModeMenu.menu.ClearItems();
+            foreach (PrefabViewMode mode in Enum.GetValues(typeof(PrefabViewMode)))
+            {
+                var name = System.Text.RegularExpressions.Regex.Replace(
+                    mode.ToString(),
+                    "([a-z])([A-Z])",
+                    "$1 $2");
+                m_ViewModeMenu.menu.AppendAction(
+                    name,
+                    _ => SetViewMode(mode),
+                    _ => m_ViewMode == mode ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.Normal);
+            }
+        }
         private void Refresh()
         {
-            contentContainer.Clear();
-
-            foreach (var item in m_Data)
-            {
-                Add(BuildAndBind(item));
-            }
-            UpdateScrollViewLabel();
-        }
-
-        private VisualElement BuildAndBind(PrefabData item)
-        {
-            var entry = new PrefabEntryItem();
-            entry.Bind(item);
-            return entry;
-        }
-
-        internal void UpdateScrollViewLabel()
-        {
-            bool flag = m_Data.Count == 0;
-
-            if (flag)
-            {
-                if (m_EmptyLabel == null)
-                {
-                    m_EmptyLabel = new(EMPTY_LABEL_MESSAGE);
-                    Add(m_EmptyLabel);
-                }
-                    
-
-                m_EmptyLabel.EnableInClassList(emptyLabelUssClassName, flag);
-            }
-            else
-            {
-                m_EmptyLabel?.RemoveFromHierarchy();
-                m_EmptyLabel = null;
-            }
+            m_ActiveView?.SetData(m_Data);
         }
 
     }

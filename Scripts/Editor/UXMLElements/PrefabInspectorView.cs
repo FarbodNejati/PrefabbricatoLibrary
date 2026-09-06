@@ -16,8 +16,6 @@ namespace Farbod.Prefabbricato
     {
         private readonly static string HEADER_TITLE = "Inspector";
         private readonly static int TAG_ADD_MAX_LENGTH = 16;
-        private readonly static Color TAG_COLOR_DEFAULT = Color.mediumAquamarine;
-        private readonly static float TAG_COLOR_MAX_OPACITY = 0.3f;
 
         internal readonly static string ussClassName = "inspector-view";
         private readonly static string m_contentUssClassName = ussClassName + "_content";
@@ -25,7 +23,6 @@ namespace Farbod.Prefabbricato
         private readonly static string m_contentTitleUssClassName = ussClassName + "_content__title";
         private readonly static string m_TagContainerUssClassName = ussClassName + "_content__labels";
         private readonly static string m_TagFieldUssClassName = ussClassName + "_content__label-field";
-        private readonly static string m_TagUssClassName = "asset-label";
 
 
         internal DropdownMenu m_ToolbarDropdown;
@@ -154,7 +151,7 @@ namespace Farbod.Prefabbricato
         internal void ClearContent()
         {
             SetContent(null, null, null);
-            m_Content.SetEnabled(false);
+            //m_Content.SetEnabled(false);
         }
         internal void SetContent(Texture preview, string title, string[] tags, Action<string[]> onTagsChange = null)
         {
@@ -183,49 +180,65 @@ namespace Farbod.Prefabbricato
                 AddTag(item.Key, item.Value);
             }
         }
-
         private void AddTag(string text, Color? color, bool canRemove = true)
         {
 
             if (string.IsNullOrEmpty(text) || activeTags.ContainsKey(text))
                 return;
 
-            #region template
-            var finalColor = color.HasValue ? color.Value : TAG_COLOR_DEFAULT;
-            finalColor.a = Mathf.Min(finalColor.a, TAG_COLOR_MAX_OPACITY);
+            var label = new AssetLabelElement(text,color,RemoveTag);
+            label.onClick += onLabelClicked;
+            label.onContextMenu += onLabelContextMenu;
 
-            var tag = new VisualElement();
-            tag.style.backgroundColor = finalColor;
-            tag.AddToClassList(m_TagUssClassName);
-
-            var label = new Label(text);
-            tag.Add(label);
-
-            //Remove button + callback
-            if (canRemove)
-            {
-                Button remove_button = new(() => RemoveTag(text));
-                remove_button.text = "x";
-                remove_button.tooltip = "Remove label from asset";
-                tag.Add(remove_button);
-            }
-
-            m_ContentTagContainer.Add(tag);
-            #endregion
-
-            #region events
-            //Click event
-            tag.RegisterCallback<ClickEvent>(evt => onLabelClicked?.Invoke(text));
-            //Context menu manipulator
-            tag.AddManipulator(new ContextualMenuManipulator(e => onLabelContextMenu?.Invoke(text, e)));
-            #endregion
+            m_ContentTagContainer.Add(label);
 
 
-
-
-            activeTags.Add(text, tag);
+            activeTags.Add(text, label);
             onLabelsChange?.Invoke(activeTags.Keys.ToArray());
         }
+
+        //private void AddTag(string text, Color? color, bool canRemove = true)
+        //{
+
+        //    if (string.IsNullOrEmpty(text) || activeTags.ContainsKey(text))
+        //        return;
+
+        //    #region template
+        //    var finalColor = color.HasValue ? color.Value : TAG_COLOR_DEFAULT;
+        //    finalColor.a = Mathf.Min(finalColor.a, TAG_COLOR_MAX_OPACITY);
+
+        //    var tag = new VisualElement();
+        //    tag.style.backgroundColor = finalColor;
+        //    tag.AddToClassList(m_TagUssClassName);
+
+        //    var label = new Label(text);
+        //    tag.Add(label);
+
+        //    //Remove button + callback
+        //    if (canRemove)
+        //    {
+        //        Button remove_button = new(() => RemoveTag(text));
+        //        remove_button.text = "x";
+        //        remove_button.tooltip = "Remove label from asset";
+        //        tag.Add(remove_button);
+        //    }
+
+        //    m_ContentTagContainer.Add(tag);
+        //    #endregion
+
+        //    #region events
+        //    //Click event
+        //    tag.RegisterCallback<ClickEvent>(evt => onLabelClicked?.Invoke(text));
+        //    //Context menu manipulator
+        //    tag.AddManipulator(new ContextualMenuManipulator(e => onLabelContextMenu?.Invoke(text, e)));
+        //    #endregion
+
+
+
+
+        //    activeTags.Add(text, tag);
+        //    onLabelsChange?.Invoke(activeTags.Keys.ToArray());
+        //}
         private void RemoveTag(string text)
         {
             //Remove tag VisualElement
@@ -241,7 +254,7 @@ namespace Farbod.Prefabbricato
         }
         private void AddTagFromField()
         {
-            AddTag(m_AddTagField.value.Trim(), TAG_COLOR_DEFAULT);
+            AddTag(m_AddTagField.value.Trim(), null);
             m_AddTagField.value = "";
         }
         private void CatchFieldSubmit(KeyDownEvent evt, Action onSubmit)

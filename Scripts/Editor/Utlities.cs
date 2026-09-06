@@ -127,9 +127,9 @@ namespace Farbod.Prefabbricato.Backend
         /// <summary>
         /// Returns assigned color if available, fallback if not.
         /// </summary>
-        public static Color GetLabelColor(string label, Color fallback)
+        public static Color? GetLabelColor(string label)
         {
-            return PrefabbricatoSettings.instance.GetLabelColor(label)?? fallback;
+            return PrefabbricatoSettings.instance.GetLabelColor(label);
         }
     }
     internal static class PathUtilities
@@ -296,7 +296,7 @@ namespace Farbod.Prefabbricato.Backend
                 return $"{self.Hours} hours ago";
             else if (self.TotalDays < 30)
                 return $"{self.Days} days ago";
-            else if (self.TotalDays < 90)
+            else if (self.TotalDays < 365)
                 return $"{Mathf.FloorToInt(self.Days / 30)} months ago";
 
             int years = Mathf.FloorToInt(self.Days / 365);

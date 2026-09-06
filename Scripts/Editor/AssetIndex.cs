@@ -81,11 +81,6 @@ namespace Farbod.Prefabbricato.Backend
             //(index data not null, and path matches)
             if (savedData?.labelToAssetIndex!=null && savedData.indexPath== SCAN_PATH)
             {
-                IsIndexed = true;
-
-                //Load last index time
-                LastIndexTime = savedData.LastIndexBuildTime;
-
                 //Load label to asset guid index
                 LabelToAssetIndex = new();
                 foreach (var kvp in savedData.labelToAssetIndex)
@@ -96,9 +91,12 @@ namespace Farbod.Prefabbricato.Backend
 
                 //Build asset guid to label index
                 AssetToLabelIndex = ReverseIndex(LabelToAssetIndex);
+                //Build data list
                 BuildPrefabDataList();
-                //UpdateLabelsFromIndex();
-                //OnIndexUpdate?.Invoke();
+
+                IsIndexed = true;
+                LastIndexTime = savedData.LastIndexBuildTime;
+                m_LastIndexPath = savedData.indexPath;
             }
         }
 
@@ -150,29 +148,12 @@ namespace Farbod.Prefabbricato.Backend
             PrefabDataList.Clear();
             foreach (var guid in AssetToLabelIndex.Keys)
             {
-                var prefab = AssetDatabase.LoadAssetByGUID<GameObject>(new GUID(guid));
-                PrefabData data = new(prefab, guid, prefab.name, AssetToLabelIndex[guid].ToList());
+                PrefabData data = new(guid, AssetToLabelIndex[guid].ToList());
                 PrefabDataList.Add(data);
             }
         }
 
-        //private static void UpdateLabelsFromIndex()
-        //{
-        //    var labelColors = EditorDataManager.GetAllAssignedLabelColors();
 
-        //    LabelData[] data = new LabelData[LabelToAssetIndex.Count];
-        //    int i = 0;
-        //    foreach (var item in LabelToAssetIndex)
-        //    {
-        //        string labelName = item.Key;
-        //        bool hasSavedColor = labelColors.TryGetValue(labelName, out var color);
-        //        data[i] = new(labelName, hasSavedColor?color:null, item.Value?.Count??0);
-        //        i++;
-        //    }
-
-        //    Array.Sort(data, (a, b) => b.latestCount.CompareTo(a.latestCount));
-        //    Labels.AddRange(data);
-        //}
         private static void SaveIndexData()
         {
             if (!IsIndexed)
@@ -233,20 +214,27 @@ namespace Farbod.Prefabbricato.Backend
     }
 
     [System.Serializable]
-    internal struct PrefabData
+    internal class PrefabData
     {
         public readonly string guid;
         public readonly string assetPath;
         public readonly string name;
         public GameObject prefab;
         public List<string> labels;
-
-        public PrefabData(GameObject prefab, string guid, string path, List<string> labels)
+        public PrefabData(string guid, List<string> labels)
+        {
+            this.guid = guid;
+            this.assetPath = AssetDatabase.GUIDToAssetPath(guid);
+            prefab = AssetDatabase.LoadAssetByGUID<GameObject>(new(guid));
+            name = prefab.name;
+            this.labels = labels;
+        }
+        public PrefabData(GameObject prefab, string name, string guid, string path, List<string> labels)
         {
             this.prefab = prefab;
             this.guid = guid;
             this.assetPath = path;
-            this.name = prefab.name;
+            this.name = name;
             this.labels = labels;
         }
         

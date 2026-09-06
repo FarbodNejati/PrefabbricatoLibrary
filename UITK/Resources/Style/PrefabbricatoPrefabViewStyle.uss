@@ -157,3 +157,27 @@
     opacity: 0.8;
     background-position-x: right -1px;
 }
+
+.prefabs-view ToolbarSearchField {
+    max-width: 50%;
+    width: 275px;
+}
+
+PrefabCompactListView .asset-label {
+    height: auto;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+PrefabCompactListView .asset-label .asset-label__name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+PrefabCompactListView .unity-list-view__item {
+    justify-content: center;
+}
+
+PrefabCompactListView .unity-list-view__item .unity-multi-column-view__cell {
+    justify-content: center;
+}

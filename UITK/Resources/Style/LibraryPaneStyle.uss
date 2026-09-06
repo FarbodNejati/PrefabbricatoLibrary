@@ -108,29 +108,14 @@
 }
 
 #labels-view .asset-label {
-    margin-right: 4px;
-    margin-top: 2px;
-    margin-left: 4px;
     border-radius: 6px;
     border-width: 1px;
-    font-size: var(--unity-metrics-default-font_semi_small_size);
-    align-items: center;
-    margin-bottom: 2px;
-    flex-grow: 0;
-    flex-direction: row;
-    height: 20px;
-    padding-left: 2px;
+    height: 100%;
 }
 
-#labels-view .asset-label:enabled:hover {
-    border-color: rgba(255, 255, 255, 0.2);
-}
 
-#labels-view .asset-label .asset-label_name {
-    padding-left: 2px;
-    text-overflow: ellipsis;
-    flex-grow: 1;
-}
+
+
 
 #labels-view .asset-label .asset-label_counter {
     padding-right: 4px;
