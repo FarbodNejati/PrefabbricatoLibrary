@@ -204,13 +204,13 @@ SplitView #fixed-pane Toolbar {
     margin-bottom: 4px;
 }
 
-.inspector-view .inspector-view_content__tags {
+.inspector-view .inspector-view_content__labels {
     flex-direction: row;
     flex-wrap: wrap;
     padding-left: 2px;
 }
 
-.inspector-view .inspector-view_content__tags > .prefab-tag {
+.inspector-view .inspector-view_content__labels > .asset-label {
     margin-right: 2px;
     margin-top: 2px;
     margin-left: 2px;
@@ -226,14 +226,14 @@ SplitView #fixed-pane Toolbar {
     height: var(--unity-metrics-single_line-height);
 }
 
-.inspector-view .inspector-view_content__tags > .prefab-tag > Label {
+.inspector-view .inspector-view_content__labels > .asset-label > Label {
     padding-left: 4px;
     overflow: hidden;
     text-overflow: ellipsis;
     flex-shrink: 1;
 }
 
-.inspector-view .inspector-view_content__tags > .prefab-tag > Button {
+.inspector-view .inspector-view_content__labels > .asset-label > Button {
     padding: 0;
     margin-left: 0;
     margin-right: -1px;
@@ -253,32 +253,32 @@ SplitView #fixed-pane Toolbar {
     opacity: 0.6;
 }
 
-.inspector-view .inspector-view_content__tags > .prefab-tag:hover > Button {
+.inspector-view .inspector-view_content__labels > .asset-label:hover > Button {
     background-color: rgba(255, 255, 255, 0.1);
 }
 
-.inspector-view .inspector-view_content__tags > .prefab-tag > Button:enabled:hover {
+.inspector-view .inspector-view_content__labels > .asset-label > Button:enabled:hover {
     opacity: 1;
 }
 
-.inspector-view .inspector-view_content__tags > .prefab-tag > Button:enabled:active {
+.inspector-view .inspector-view_content__labels > .asset-label > Button:enabled:active {
     border-color: var(--unity-colors-default-text);
     background-color: rgba(255, 255, 255, 0.39);
 }
 
-.inspector-view_content__tag-field {
+.inspector-view_content__label-field {
     margin-bottom: 2px;
     overflow: hidden;
 }
 
-.inspector-view_content__tag-field .unity-base-field__label {
+.inspector-view_content__label-field .unity-base-field__label {
     margin-right: 4px;
     min-height: auto;
     width: auto;
     min-width: 46px;
 }
 
-.inspector-view_content__tag-field .unity-base-field__input {
+.inspector-view_content__label-field .unity-base-field__input {
     -unity-text-align: middle-left;
     -unity-font-style: italic;
     flex-basis: auto;
@@ -288,7 +288,7 @@ SplitView #fixed-pane Toolbar {
     flex-grow: 1;
 }
 
-.inspector-view_content__tag-field Button {
+.inspector-view_content__label-field Button {
     overflow: hidden;
     -unity-text-align: middle-center;
     position: absolute;
@@ -308,36 +308,14 @@ SplitView #fixed-pane Toolbar {
     border-left-color: var(--unity-colors-button-border);
 }
 
-.inspector-view_content__tag-field:enabled:hover Button {
+.inspector-view_content__label-field:enabled:hover Button {
     border-top-color: var(--unity-colors-input_field-border-hover);
     border-right-color: var(--unity-colors-input_field-border-hover);
     border-bottom-color: var(--unity-colors-input_field-border-hover);
 }
 
-.inspector-view_content__tag-field:enabled:focus Button {
+.inspector-view_content__label-field:enabled:focus Button {
     border-top-color: var(--unity-colors-input_field-border-focus);
     border-right-color: var(--unity-colors-input_field-border-focus);
     border-bottom-color: var(--unity-colors-input_field-border-focus);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

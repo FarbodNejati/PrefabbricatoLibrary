@@ -2,6 +2,7 @@ using Farbod.Prefabbricato.Backend;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
+using UnityEditor.Search;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -146,17 +147,17 @@ namespace Farbod.Prefabbricato
             m_LabelsList.RefreshItems();
 
             //If there are no entries being shown
-            if (m_ShownLabelEntries.Count == 0)
-            {
-                m_ListEmptyLabel = m_LabelsList.Q<Label>(className: "unity-list-view__empty-label");
+            //if (m_ShownLabelEntries.Count == 0)
+            //{
+            //    m_ListEmptyLabel = m_LabelsList.Q<Label>(className: BaseListView.emptyLabelUssClassName);
 
 
-                //If there are label entries but queryturns up nothing
-                if (m_ShownLabelEntries.Count == 0 && m_LabelEntries.Count != 0)
-                    m_ListEmptyLabel.text = LABELS_LIST_NO_RESULT(query);
-                else
-                    m_ListEmptyLabel.text = LABELS_LIST_EMPTY_TEXT;
-            }
+            //    //If there are label entries but queryturns up nothing
+            //    if (m_ShownLabelEntries.Count == 0 && m_LabelEntries.Count != 0)
+            //        m_ListEmptyLabel.text = LABELS_LIST_NO_RESULT(query);
+            //    else
+            //        m_ListEmptyLabel.text = LABELS_LIST_EMPTY_TEXT;
+            //}
         }
         /// <summary>
         /// Filter m_LabelEntries(all) by search query and add them to m_ShownLabelEntries(filtered)
@@ -270,6 +271,20 @@ namespace Farbod.Prefabbricato
                 toggle.SetValueWithoutNotify(hasValue);
             };
 
+            m_LabelsList.makeNoneElement = () =>
+            {
+                var emptyLabel = new Label();
+                emptyLabel.AddToClassList(BaseListView.emptyLabelUssClassName);
+
+                //If there are label entries but queryturns up nothing
+                string query = m_LabelsSearchField.value;
+                if (query != "" && m_LabelEntries.Count != 0)
+                    emptyLabel.text = LABELS_LIST_NO_RESULT(query);
+                else if (m_LabelEntries.Count == 0)
+                    emptyLabel.text = LABELS_LIST_EMPTY_TEXT;
+
+                return emptyLabel;
+            };
             m_LabelsList.fixedItemHeight = 24;
             m_LabelsList.showAlternatingRowBackgrounds = AlternatingRowBackground.All;
             m_LabelsList.itemsSource = m_ShownLabelEntries;
@@ -280,6 +295,7 @@ namespace Farbod.Prefabbricato
         {
             //First get user assigned label colors
             m_LabelEntries = LabelUtilities.GetProjectLabels(LabelSelection.IndexedAndColorAssigned);
+
             UpdateListView();
         }
         private void SaveActiveColorEntries()
@@ -292,6 +308,10 @@ namespace Farbod.Prefabbricato
 
         private void RegisterCallbacks()
         {
+            //Refresh labels
+            AssetIndex.onIndexUpdate += FetchProjectLabels;
+
+
             //Choose library double click
             m_PathField.labelElement.RegisterCallback<ClickEvent>(evt =>
             {

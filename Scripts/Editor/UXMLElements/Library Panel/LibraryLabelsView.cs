@@ -23,7 +23,7 @@ namespace Farbod.Prefabbricato
     {
         private readonly static Color LABEL_COLOR_DEFAULT = Color.lightBlue;
         private readonly static float TAG_COLOR_MAX_OPACITY = 0.15f;
-        private readonly static string m_AssetLabelUssClassName = "prefab-tag";
+        private readonly static string m_AssetLabelUssClassName = "asset-label";
         private readonly static string m_LabelNameUssClassName = m_AssetLabelUssClassName + "_name";
         private readonly static string m_LabelCounterUssClassName = m_AssetLabelUssClassName+"_counter";
 
@@ -157,10 +157,10 @@ namespace Farbod.Prefabbricato
 
         private void FilterLabels(string searchText)
         {
+            m_ShownLabelEntries.Clear();
+
             if (m_LabelEntries == null || m_LabelEntries.Count == 0)
                 return;
-
-            m_ShownLabelEntries.Clear();
 
             var query = string.IsNullOrEmpty(searchText)
                 ? m_LabelEntries.AsEnumerable()

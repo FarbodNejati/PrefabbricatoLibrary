@@ -132,8 +132,6 @@ namespace Farbod.Prefabbricato.Backend
             return PrefabbricatoSettings.instance.GetLabelColor(label)?? fallback;
         }
     }
-
-
     internal static class PathUtilities
     {
         public static string GetAbsolutePathFromProject(string relativePath)
@@ -281,6 +279,31 @@ namespace Farbod.Prefabbricato.Backend
                 UnityEditor.EditorUtility.RevealInFinder(path);
 #endif
             }
+        }
+    }
+
+    public static class TimeSpanExtensions
+    {
+        public static string ToShortString(this TimeSpan self)
+        {
+            if (self == null)
+                return null;
+            if (self.TotalSeconds < 60)
+                return $"{self.Seconds} seconds ago";
+            else if (self.TotalMinutes < 60)
+                return $"{self.Minutes} minutes ago";
+            else if (self.TotalHours < 24)
+                return $"{self.Hours} hours ago";
+            else if (self.TotalDays < 30)
+                return $"{self.Days} days ago";
+            else if (self.TotalDays < 90)
+                return $"{Mathf.FloorToInt(self.Days / 30)} months ago";
+
+            int years = Mathf.FloorToInt(self.Days / 365);
+            if (years < 8)
+                return $"{years} years ago";
+            else
+                return $"an absurdly long time ago";
         }
     }
 }

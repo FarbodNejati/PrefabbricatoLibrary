@@ -1,10 +1,10 @@
 <ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
-    <Style src="project://database/Assets/PrefabrricatoLibrary/UITK/Resources/Style/PrefabbricatoLibraryStyle.uss?fileID=7433441132597879392&amp;guid=8d6276f758df3b94e8f7890dfd3ec576&amp;type=3#PrefabbricatoLibraryStyle"/>
-    <Style src="project://database/Assets/PrefabrricatoLibrary/UITK/Resources/Style/LibraryPaneStyle.uss?fileID=7433441132597879392&amp;guid=b17084bd5cd453f4fbf543d7444f15bf&amp;type=3#LibraryPaneStyle"/>
-    <Style src="project://database/Assets/PrefabrricatoLibrary/UITK/Resources/Style/PrefabbricatoPrefabViewStyle.uss?fileID=7433441132597879392&amp;guid=654698d3189c4414abcf98a000b52726&amp;type=3#PrefabbricatoPrefabViewStyle"/>
+    <Style src="project://database/Assets/PrefabbricatoLibrary/UITK/Resources/Style/PrefabbricatoPrefabViewStyle.uss?fileID=7433441132597879392&amp;guid=654698d3189c4414abcf98a000b52726&amp;type=3#PrefabbricatoPrefabViewStyle"/>
+    <Style src="project://database/Assets/PrefabbricatoLibrary/UITK/Resources/Style/PrefabbricatoLibraryStyle.uss?fileID=7433441132597879392&amp;guid=8d6276f758df3b94e8f7890dfd3ec576&amp;type=3#PrefabbricatoLibraryStyle"/>
+    <Style src="project://database/Assets/PrefabbricatoLibrary/UITK/Resources/Style/LibraryPaneStyle.uss?fileID=7433441132597879392&amp;guid=b17084bd5cd453f4fbf543d7444f15bf&amp;type=3#LibraryPaneStyle"/>
     <Farbod.Prefabbricato.SplitView orientation="Horizontal" name="main-split" fixed-pane-initial-dimension="200" fixed-pane-index="1">
         <ui:VisualElement name="prefabs-view_pane">
-            <Farbod.Prefabbricato.PrefabListView/>
+            <Farbod.Prefabbricato.PrefabPanelView/>
         </ui:VisualElement>
         <Farbod.Prefabbricato.SplitView orientation="Vertical" name="fixed-pane" fixed-pane-initial-dimension="160" fixed-pane-index="1">
             <Farbod.Prefabbricato.PrefabInspectorView/>

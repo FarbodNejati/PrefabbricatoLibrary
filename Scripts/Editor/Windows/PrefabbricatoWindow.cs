@@ -25,7 +25,7 @@ namespace Farbod.Prefabbricato
         /*private SettingsView m_SettingsView;*/
         private PrefabInspectorView m_Inspector;
         private LibraryView m_LibraryView;
-
+        private PrefabPanelView m_PrefabPanel;
         /// <summary>
         /// The menu item available in the editor toolbar for opening this window.
         /// </summary>
@@ -79,16 +79,15 @@ namespace Farbod.Prefabbricato
             var btn = m_GettingStarted.Q<Button>(className: m_GetStartedButtonUssClassName);
             btn.clicked += SelectRootDirectory;
 
-            //Hook up settings view
-            //m_SettingsView = root.Q<SettingsView>();
-            //m_SettingsView?.Close();
-
             //Hook up library view
             m_LibraryView = root.Q<LibraryView>(name: "library-pane");
             
 
             //Inspector
             m_Inspector = root.Q<PrefabInspectorView>();
+
+            //Prefab panel
+            m_PrefabPanel = root.Q<PrefabPanelView>();
         }
 
         /// <summary>
@@ -126,8 +125,6 @@ namespace Farbod.Prefabbricato
             var menu = evt.menu;
             menu.AppendAction("Edit Label", e => { 
                 SettingsWindow.PingLabel(label);
-                //m_SettingsView.Open();
-                //m_SettingsView.PingLabel(label);
             });
         }
         void OnIndexUpdate()
@@ -137,14 +134,21 @@ namespace Farbod.Prefabbricato
                 m_LibraryView.ShowScanWarningPrompt(true);
             //If indexed, but index is stale.
             else if(AssetIndex.IsStale)
-                m_LibraryView.ShowScanWarningPrompt(true, $"Last scan was {AssetIndex.LastIndexSpan.ToShortString()}");
+                m_LibraryView.ShowScanWarningPrompt(true, $"Last scan: {AssetIndex.LastIndexSpan.ToShortString()}");
             //Hide scan warning
             else
                 m_LibraryView.ShowScanWarningPrompt(false);
 
             //Library registered labels
             m_LibraryView.LabelsView.SetLabels(LabelUtilities.GetProjectLabels());
+
             //Library project folders
+
+            //Prefabs list views
+            m_PrefabPanel.allTabs.ForEach(t =>
+            {
+                t.Data = AssetIndex.PrefabDataList;
+            });
         }
         private bool CheckStartup() => PrefabbricatoSettings.IsLibrarySetUp();
         private void ShowStartMenu(VisualElement root, bool show)

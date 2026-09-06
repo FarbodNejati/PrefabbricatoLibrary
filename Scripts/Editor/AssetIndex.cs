@@ -48,6 +48,7 @@ namespace Farbod.Prefabbricato.Backend
         /// </summary>
         internal static Dictionary<string, HashSet<string>> AssetToLabelIndex { get; private set; } = new();
 
+        internal static List<PrefabData> PrefabDataList { get; private set; } = new();
         /// <summary>
         /// Each indexed Prefab GUID to its data.
         /// </summary>
@@ -95,6 +96,7 @@ namespace Farbod.Prefabbricato.Backend
 
                 //Build asset guid to label index
                 AssetToLabelIndex = ReverseIndex(LabelToAssetIndex);
+                BuildPrefabDataList();
                 //UpdateLabelsFromIndex();
                 //OnIndexUpdate?.Invoke();
             }
@@ -129,7 +131,9 @@ namespace Farbod.Prefabbricato.Backend
             }
             //Build index : Label -> asset
             LabelToAssetIndex = ReverseIndex(AssetToLabelIndex);
-            //UpdateLabelsFromIndex();
+
+
+            BuildPrefabDataList();
 
             //Results
             IsIndexed = true;
@@ -140,6 +144,18 @@ namespace Farbod.Prefabbricato.Backend
             //Debug
             Debug.Log($"[Prefabbricato] Scan completed. Indexed {prefab_guids.Count()} assets and {LabelToAssetIndex.Count()} labels.");
         }
+        
+        private static void BuildPrefabDataList()
+        {
+            PrefabDataList.Clear();
+            foreach (var guid in AssetToLabelIndex.Keys)
+            {
+                var prefab = AssetDatabase.LoadAssetByGUID<GameObject>(new GUID(guid));
+                PrefabData data = new(prefab, guid, prefab.name, AssetToLabelIndex[guid].ToList());
+                PrefabDataList.Add(data);
+            }
+        }
+
         //private static void UpdateLabelsFromIndex()
         //{
         //    var labelColors = EditorDataManager.GetAllAssignedLabelColors();
@@ -209,73 +225,35 @@ namespace Farbod.Prefabbricato.Backend
             LastIndexTime = default;
             LabelToAssetIndex.Clear();
             AssetToLabelIndex.Clear();
+            PrefabDataList.Clear();
             IndexSavedDataManager.ClearIndexData();
 
             onIndexUpdate?.Invoke();
         }
     }
 
-    internal class PrefabData
+    [System.Serializable]
+    internal struct PrefabData
     {
-        public string guid;
-        public string assetPath;
-        public string name;
+        public readonly string guid;
+        public readonly string assetPath;
+        public readonly string name;
         public GameObject prefab;
-        public Texture2D previewThumbnail { get; private set; }
+        public List<string> labels;
 
-        public void GeneratePreviewThumbnail()
+        public PrefabData(GameObject prefab, string guid, string path, List<string> labels)
         {
-            Texture2D tex = AssetPreview.GetAssetPreview(prefab);
-
-            // AssetPreview works asynchronously; wait until it’s created
-            while (tex == null)
-            {
-                AssetPreview.GetAssetPreview(prefab);
-                System.Threading.Thread.Sleep(50);
-                tex = AssetPreview.GetMiniThumbnail(prefab);
-            }
-            previewThumbnail = tex;
+            this.prefab = prefab;
+            this.guid = guid;
+            this.assetPath = path;
+            this.name = prefab.name;
+            this.labels = labels;
         }
-
+        
         public void SelectInEditor()
         {
             UnityEditor.Selection.activeObject = prefab;
             EditorGUIUtility.PingObject(prefab);
-        }
-
-        internal static PrefabData GetPrefabDataFromGUID(string guid)
-        {
-            var prefab = AssetDatabase.LoadAssetByGUID<GameObject>(new GUID(guid));
-            if (prefab == null) return null;
-
-            PrefabData data = new();
-            data.prefab = prefab;
-            data.name = prefab.name;
-            data.guid = guid;
-            data.assetPath = AssetDatabase.GetAssetPath(prefab);
-
-            return data;
-        }
-    }
-
-    public static class TimeSpanExtensions
-    {
-        public static string ToShortString(this TimeSpan self)
-        {
-            if(self==null) 
-                return null;
-            if (self.TotalSeconds < 60)
-                return $"{self.Seconds} seconds ago";
-            else if (self.TotalMinutes < 60)
-                return $"{self.Minutes} minutes ago";
-            else if (self.TotalHours < 24)
-                return $"{self.Hours} hours ago";
-            else if (self.TotalDays < 30)
-                return $"{self.Days} days ago";
-            else if (self.TotalDays < 90)
-                return $"{Mathf.FloorToInt(self.Days / 30)} months ago";
-            else
-                return $"A long time ago";
         }
     }
 }

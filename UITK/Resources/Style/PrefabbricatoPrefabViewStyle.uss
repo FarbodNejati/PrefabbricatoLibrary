@@ -1,16 +1,159 @@
-.prefab-view {
+.prefabs-view {
     min-width: 150px;
     flex-grow: 1;
     width: 100%;
 }
 
-.prefab-view > .unity-scroll-view {
-    flex-grow: 1;
-    background-color: var(--unity-colors-box-background);
+.prefabs-view_tab-view {
 }
 
-.prefab-view .unity-toolbar-search-field {
+.prefabs-view_tab-view .unity-tab-view__content-viewport {
+    background-color: var(--unity-colors-app_toolbar-background);
+}
+
+.prefabs-view_tab-view .unity-tab-view__header-container {
+    padding-top: 2px;
+    justify-content: flex-start;
+    height: 26px;
+    width: 100%;
+}
+
+.prefabs-view_tab-view .unity-tab__header {
+    border-top-left-radius: var(--unity-metrics-default-border_radius);
+    border-top-right-radius: var(--unity-metrics-default-border_radius);
+    width: 140px;
+    min-width: 83px;
+    padding-right: 7px;
+    padding-left: 9px;
+    background-color: rgba(0, 0, 0, 0);
+    height: 100%;
+    min-height: 0;
+}
+
+.prefabs-view_tab-view .unity-tab__header:hover {
+    background-color: var(--unity-colors-app_toolbar_button-border_accent);
+}
+
+.prefabs-view_tab-view .unity-tab__header:checked {
+    background-color: rgb(60, 60, 60);
+}
+
+.prefabs-view_tab-view .unity-tab__header:checked .unity-tab__header-underline {
+}
+
+.prefabs-view_tab-view .unity-tab__header-label {
+    flex-grow: 1;
     flex-shrink: 1;
-    max-width: 60%;
-    width: 290px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.prefabs-view_tab-view .unity-tab__header .unity-tab__header-label {
+    translate: -12px 0;
+    transition-property: translate;
+    transition-duration: 0.15s;
+    transition-timing-function: ease-out-cubic;
+}
+
+.prefabs-view_tab-view .unity-tab__header:hover .unity-tab__header-label {
+    translate: 0 0;
+}
+
+.prefabs-view_tab-view .unity-tab__header .unity-tab__close-button {
+    background-size: 8px 8px;
+    margin-left: 0;
+    margin-bottom: 1px;
+    opacity: 0.4;
+    margin-right: 0;
+}
+
+.prefabs-view_tab-view .unity-tab__header .unity-tab__close-button:hover {
+    opacity: 1;
+}
+
+.prefabs-view_tab-view .tab-header-controls {
+    height: 16px;
+    width: 16px;
+    margin-right: 2px;
+    margin-left: 2px;
+    border-top-color: var(--unity-colors-app_toolbar_button-border_accent);
+    border-right-color: var(--unity-colors-app_toolbar_button-border);
+    border-bottom-color: var(--unity-colors-app_toolbar_button-border);
+    border-left-color: var(--unity-colors-app_toolbar_button-border_accent);
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    border-top-left-radius: var(--unity-metrics-default-border_radius);
+    border-top-right-radius: var(--unity-metrics-default-border_radius);
+    border-bottom-right-radius: var(--unity-metrics-default-border_radius);
+    border-bottom-left-radius: var(--unity-metrics-default-border_radius);
+    background-color: var(--unity-colors-app_toolbar_button-background);
+}
+
+.prefabs-view_tab-view .tab-header-controls:hover {
+    background-color: var(--unity-colors-app_toolbar_button-background-hover);
+}
+
+.prefabs-view_tab-view .tab-header-controls:active {
+    background-color: var(--unity-colors-app_toolbar_button-background-pressed);
+}
+
+.prefabs-view_tab-view .unity-repeat-button {
+    background-position-x: center;
+    background-size: 18px 13px;
+    height: 16px;
+    width: 16px;
+    margin-right: 2px;
+    margin-left: 2px;
+}
+
+.prefabs-view_tab-view .unity-tab-view__next-button {
+    margin-right: 24px;
+}
+
+.prefabs-view_tab-view .unity-tab__header #unity-tab__separator {
+    opacity: 0.3;
+    background-color: var(--unity-colors-default-text);
+    width: 1px;
+}
+
+.prefabs-view_tab-view .unity-tab__header:checked #unity-tab__separator {
+    opacity: 0;
+}
+
+.prefabs-view_tab-view .unity-tab__header:hover #unity-tab__separator {
+    opacity: 0;
+}
+
+.prefabs-view_tab-view .unity-tab__header .unity-tab__reorderable-handle {
+    width: 12px;
+    align-self: center;
+    opacity: 0;
+    margin-left: 0;
+    margin-right: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    justify-content: flex-start;
+}
+
+.prefabs-view_tab-view .unity-tab__header:hover .unity-tab__reorderable-handle {
+    opacity: 0.7;
+    translate: 0 0;
+}
+
+.prefabs-view_tab-view .unity-tab__header .unity-tab__reorderable-handle:hover {
+    opacity: 1;
+}
+
+.prefabs-view_tab-view .fadeout {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 60px;
+    height: 100%;
+    background-image: resource("Style/prefabs-tab-header-fadeout");
+    -unity-background-image-tint-color: var(--unity-colors-app_toolbar-background);
+    opacity: 0.8;
+    background-position-x: right -1px;
 }

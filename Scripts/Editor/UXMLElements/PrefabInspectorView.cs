@@ -23,9 +23,9 @@ namespace Farbod.Prefabbricato
         private readonly static string m_contentUssClassName = ussClassName + "_content";
         private readonly static string m_contentImageUssClassName = ussClassName + "_content__image";
         private readonly static string m_contentTitleUssClassName = ussClassName + "_content__title";
-        private readonly static string m_TagContainerUssClassName = ussClassName + "_content__tags";
-        private readonly static string m_TagFieldUssClassName = ussClassName + "_content__tag-field";
-        private readonly static string m_TagUssClassName = "prefab-tag";
+        private readonly static string m_TagContainerUssClassName = ussClassName + "_content__labels";
+        private readonly static string m_TagFieldUssClassName = ussClassName + "_content__label-field";
+        private readonly static string m_TagUssClassName = "asset-label";
 
 
         internal DropdownMenu m_ToolbarDropdown;
