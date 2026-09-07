@@ -2,6 +2,7 @@ using Farbod.Prefabbricato.Backend;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -15,9 +16,12 @@ namespace Farbod.Prefabbricato
     /// </summary>
     internal class PrefabCompactListView : VisualElement, IPrefabCollectionView
     {
-        internal readonly static string ussClassName = "prefab-compact-list-view";
-        private readonly static Color TAG_COLOR_DEFAULT = Color.mediumAquamarine;
+        //Config
+        private const int DRAG_THRESHOLD = 12;
+        internal const string ussClassName = "prefab-compact-list-view";
         private static readonly Background s_PrefabIcon = UIExtensions.GetEditorIcon("Prefab Icon");
+
+
 
         private readonly MultiColumnListView m_ListView;
         private List<PrefabData> m_Data = new();
@@ -25,6 +29,7 @@ namespace Farbod.Prefabbricato
         public VisualElement Self => this;
 
         public event Action<IReadOnlyList<PrefabData>> selectionChanged;
+        public event Action<IReadOnlyList<PrefabData>> dragStarted;
         public event Action<PrefabData> itemDoubleClicked;
         public event Action<string> assetLabelClicked;
         public event Action<string, ContextualMenuPopulateEvent> labelContextMenu;
@@ -36,9 +41,22 @@ namespace Farbod.Prefabbricato
 
             var columns = new Columns
             {
-                new Column { name = "name", title = "Name", optional = false, width = 220, makeCell = MakeNameCell, bindCell = BindNameCell},
-                new Column { name = "labels", title = "Asset Labels", width = 220, makeCell = MakeLabelsCell, bindCell = BindLabelsCell },
-                new Column { name = "path", title = "Path", stretchable = true, makeCell = MakePathCell, bindCell = BindPathCell },
+                new Column {
+                    name = "name", title = "Name",
+                    optional = false,
+                    stretchable = true, width = 220, minWidth = 80, 
+                    makeCell = MakeNameCell, bindCell = BindNameCell},
+                
+                new Column { 
+                    name = "labels", title = "Asset Labels", 
+                    icon = UIExtensions.GetEditorIcon("FilterByLabel@2x"),
+                    stretchable = true, width = 220, minWidth = 110, 
+                    makeCell = MakeLabelsCell, bindCell = BindLabelsCell },
+                
+                new Column { 
+                    name = "path", title = "Path",
+                    stretchable = true, minWidth = 40, 
+                    makeCell = MakePathCell, bindCell = BindPathCell },
             };
 
             m_ListView = new MultiColumnListView(columns)
@@ -48,10 +66,78 @@ namespace Farbod.Prefabbricato
                 showAlternatingRowBackgrounds = AlternatingRowBackground.ContentOnly,
                 style = { flexGrow = 1 }
             };
+
             m_ListView.itemsChosen += items => itemDoubleClicked?.Invoke(items.Cast<PrefabData>().FirstOrDefault());
             m_ListView.selectionChanged += items => selectionChanged?.Invoke(items.Cast<PrefabData>().ToList());
-
             Add(m_ListView);
+
+            SetupDragEvents();
+        }
+
+        private Vector2 drag_start_pos;
+        private bool m_Dragging = false;
+        private List<PrefabData> m_DragItems = null;
+
+        bool m_MouseDown = false;
+        private void SetupDragEvents()
+        {
+            //Register drag events on the list view
+            m_ListView.RegisterCallback<MouseDownEvent>(evt =>
+            {
+                m_DragItems?.Clear();
+                m_MouseDown = false;
+
+                if (evt.button == 1)
+                    return;
+
+                if (m_ListView.selectedItems?.Count() > 0)
+                {
+                    m_DragItems = m_ListView.selectedItems.Select(d => (PrefabData)d).ToList();
+                }
+                if (m_DragItems?.Count() > 0)
+                {
+                    drag_start_pos = evt.mousePosition;
+                    m_Dragging = false;
+                    m_MouseDown = true;
+                }
+            });
+            m_ListView.RegisterCallback<MouseUpEvent>(evt =>
+            {
+                m_MouseDown = false;
+            });
+            // Mouse is moving
+            m_ListView.RegisterCallback<MouseMoveEvent>(evt =>
+            {
+                if (evt.button == 1)
+                    return;
+
+                //Check if we are not dragging
+                if (m_MouseDown && !m_Dragging && (evt.mousePosition - drag_start_pos).magnitude > DRAG_THRESHOLD)
+                {
+                    m_Dragging = true;
+                    StartDragOperation(evt);
+                }
+            });
+
+            // Something is being dragged into us
+            m_ListView.RegisterCallback<DragUpdatedEvent>(evt =>
+            {
+                DragAndDrop.visualMode = DragAndDropVisualMode.None; //Do not accept drag events
+            });
+        }
+        private void StartDragOperation(IMouseEvent evt)
+        {
+            
+            if (m_DragItems?.Count > 0)
+            {
+                m_Dragging = true;
+                DragAndDrop.PrepareStartDrag();
+                DragAndDrop.StartDrag("Dragging");
+                DragAndDrop.objectReferences = m_DragItems.Select(d => d.prefab).ToArray();
+                DragAndDrop.paths = m_DragItems.Select(d => d.assetPath).ToArray();
+                dragStarted?.Invoke(m_DragItems);
+            }
+            
         }
 
         public void SetData(List<PrefabData> data)
@@ -96,7 +182,8 @@ namespace Farbod.Prefabbricato
             {
                 var label = new AssetLabelElement(
                     labelName,
-                    LabelUtilities.GetLabelColor(labelName)
+                    LabelUtilities.GetLabelColor(labelName),
+                    hasIcon: false
                     );
                 label.onClick += assetLabelClicked;
                 label.onContextMenu += labelContextMenu;

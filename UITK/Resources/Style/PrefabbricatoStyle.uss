@@ -154,6 +154,8 @@ SplitView #fixed-pane Toolbar {
     border-bottom-right-radius: var(--unity-metrics-default-border_radius);
     border-top-left-radius: var(--unity-metrics-default-border_radius);
     border-bottom-left-radius: var(--unity-metrics-default-border_radius);
+
+    border-color: rgba(125, 125, 125, 0.1);
 }
 
 .asset-label:enabled:hover {

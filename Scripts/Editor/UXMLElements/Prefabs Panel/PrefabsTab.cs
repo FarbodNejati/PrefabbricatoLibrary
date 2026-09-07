@@ -20,10 +20,6 @@ namespace Farbod.Prefabbricato
     /// </summary>
     internal class PrefabsTab : VisualElement
     {
-
-        //Config
-        static readonly string STYLESHEET_RESOURCE_PATH = "Style/PrefabbricatoPrefabViewStyle";
-        static readonly string EMPTY_LABEL_MESSAGE = "List is empty";
         //USS
         internal readonly static string ussClassName = PrefabPanelView.ussClassName + "_tab";
         internal readonly static string emptyLabelUssClassName = PrefabPanelView.ussClassName + "__empty-label";

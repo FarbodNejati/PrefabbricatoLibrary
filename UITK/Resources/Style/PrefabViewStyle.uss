@@ -167,6 +167,11 @@ PrefabCompactListView .asset-label {
     height: auto;
     overflow: hidden;
     flex-shrink: 0;
+    border-color: transparent;
+}
+
+PrefabCompactListView .asset-label:hover {
+    border-color: transparent;
 }
 
 PrefabCompactListView .asset-label .asset-label__name {

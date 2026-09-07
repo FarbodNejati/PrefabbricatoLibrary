@@ -61,21 +61,8 @@ namespace Farbod.Prefabbricato
             var container = new VisualElement();
 
             //var entry = new VisualElement();
-            var entry = new AssetLabelElement() { colorIntensity = 0.1f };
+            var entry = new AssetLabelElement() { colorIntensity = 0.15f };
             container.Add(entry);
-            //entry.AddToClassList(m_AssetLabelUssClassName);
-
-            //Label icon
-            //var icon = new VisualElement();
-            //icon.style.width = icon.style.height = 12;
-            //icon.style.backgroundImage = m_LabelIconImage;
-            //entry.Add(icon);
-
-            //Label name
-            //var nameLabel = new Label("label");
-            //nameLabel.AddToClassList(m_LabelNameUssClassName);
-            //nameLabel.style.flexGrow = 1;
-            //entry.Add(nameLabel);
 
             //Label counter
             var counter = new Label("N/A");

@@ -108,14 +108,9 @@
 }
 
 #labels-view .asset-label {
-    border-radius: 6px;
     border-width: 1px;
     height: 100%;
 }
-
-
-
-
 
 #labels-view .asset-label .asset-label_counter {
     padding-right: 4px;

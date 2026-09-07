@@ -9,7 +9,7 @@ namespace Farbod.Prefabbricato
     {
         //Window config
         static readonly string UXML_RESOURCE_PATH = "UXML/PrefabbricatoLibrary";
-        static readonly string STYLESHEET_RESOURCE_PATH = "Style/PrefabbricatoLibraryStyle";
+        static readonly string STYLESHEET_RESOURCE_PATH = "Style/PrefabbricatoStyle";
         static readonly string WINDOW_ICON_CONTENT = "FilterByLabel";
         static readonly string WINDOW_TITLE = "Prefabbricato";
         static readonly Vector2 WINDOW_MIN_SIZE = new(500, 400);

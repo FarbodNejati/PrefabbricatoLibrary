@@ -25,7 +25,7 @@ namespace Farbod.Prefabbricato
 #endif
 
         //Config
-        static readonly string STYLESHEET_RESOURCE_PATH = "Style/PrefabbricatoPrefabViewStyle";
+        static readonly string STYLESHEET_RESOURCE_PATH = "Style/PrefabViewStyle";
 
         //USS
         internal readonly static string ussClassName = "prefabs-view";
