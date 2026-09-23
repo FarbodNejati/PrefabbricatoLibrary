@@ -1,4 +1,7 @@
 using Farbod.Prefabbricato.Backend;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -50,7 +53,7 @@ namespace Farbod.Prefabbricato
 
             //Show start up menu if needed
             ShowStartMenu(m_Root, !CheckStartup());
-            
+
         }
 
         private void SelectRootDirectory() => PrefabbricatoSettings.SelectLibraryDirectory();
@@ -81,7 +84,7 @@ namespace Farbod.Prefabbricato
 
             //Hook up library view
             m_LibraryView = root.Q<LibraryView>(name: "library-pane");
-            
+
 
             //Inspector
             m_Inspector = root.Q<PrefabInspectorView>();
@@ -101,7 +104,7 @@ namespace Farbod.Prefabbricato
             m_LibraryView.LabelsView.onLabelContextMenu += BuildLabelContextMenu;
             m_Inspector.onLabelContextMenu += BuildLabelContextMenu;
 
-            
+            m_PrefabPanel.selectionChanged += AssetSelected;
 
             //------------------BACKEND EVENTS  --------------------
 
@@ -113,27 +116,45 @@ namespace Farbod.Prefabbricato
                 m_LibraryView.ProjectView.Refresh(newPath);
             };
             OnIndexUpdate();
-            //Update Scan needed warning when index is updated.
+            //Repaint everything whenever the index changes, no matter what changed or why.
+            //(onIndexUpdate already covers full rebuilds and batches of incremental changes from
+            //the asset processor; the granular events are hooked to the same call too so that any
+            //single add/remove/label/move notification is enough to trigger a repaint on its own,
+            //without us having to care which kind of change it was.)
             AssetIndex.onIndexUpdate += () => OnIndexUpdate();
+            AssetIndex.onAssetAdded += _ => OnIndexUpdate();
+            AssetIndex.onAssetRemoved += _ => OnIndexUpdate();
+            AssetIndex.onAssetLabelsChanged += _ => OnIndexUpdate();
+            AssetIndex.onAssetMoved += _ => OnIndexUpdate();
 
-            PrefabbricatoSettings.onLabelColorUpdate +=(l)=> m_LibraryView.LabelsView.SetLabels(LabelUtilities.GetProjectLabels());
+            PrefabbricatoSettings.onLabelColorUpdate += (l) => m_LibraryView.LabelsView.SetLabels(LabelUtilities.GetProjectLabels());
 
 
         }
+
+        private void AssetSelected(IReadOnlyList<PrefabData> list)
+        {
+
+            m_Inspector.SetContent(list);
+        }
+
         private void BuildLabelContextMenu(string label, ContextualMenuPopulateEvent evt)
         {
             var menu = evt.menu;
-            menu.AppendAction("Edit Label", e => { 
+            menu.AppendAction("Edit Label", e => {
                 SettingsWindow.PingLabel(label);
+            });
+            menu.AppendAction("Remove from all assets", e => {
+                LabelUtilities.RemoveLabelFromAllAssets(label);
             });
         }
         void OnIndexUpdate()
         {
             //Scan needed warning
-            if(!AssetIndex.IsIndexed)
+            if (!AssetIndex.IsIndexed)
                 m_LibraryView.ShowScanWarningPrompt(true);
             //If indexed, but index is stale.
-            else if(AssetIndex.IsStale)
+            else if (AssetIndex.IsStale)
                 m_LibraryView.ShowScanWarningPrompt(true, $"Last scan: {AssetIndex.LastIndexSpan.ToShortString()}");
             //Hide scan warning
             else
@@ -149,12 +170,14 @@ namespace Farbod.Prefabbricato
             {
                 t.Data = AssetIndex.PrefabDataList;
             });
+
+            m_LibraryView.ProjectView.Refresh();
         }
         private bool CheckStartup() => PrefabbricatoSettings.IsLibrarySetUp();
         private void ShowStartMenu(VisualElement root, bool show)
         {
             //Set overlay display
-            m_GettingStarted.style.display = show?DisplayStyle.Flex:DisplayStyle.None;
+            m_GettingStarted.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
         }
     }
 }

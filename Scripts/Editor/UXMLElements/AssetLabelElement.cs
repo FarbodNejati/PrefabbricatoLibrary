@@ -88,14 +88,15 @@ internal class AssetLabelElement : VisualElement
             onClick?.Invoke(labelName);
         });
 
+
         this.AddManipulator(new ContextualMenuManipulator(e => onContextMenu?.Invoke(labelName, e)));
 
         if (onRemove != null)
         {
-            Button remove_button = new(() => onRemove.Invoke(name));
+            Button remove_button = new(() => onRemove.Invoke(labelName));
             remove_button.AddToClassList(removeButtonUssClassName);
             remove_button.text = "x";
-            remove_button.tooltip = "Remove label from asset";
+            remove_button.tooltip = "Remove from asset(s)";
             hierarchy.Add(remove_button);
         }
         SetColor(color);

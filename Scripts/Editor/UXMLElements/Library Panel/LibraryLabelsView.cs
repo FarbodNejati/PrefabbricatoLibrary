@@ -144,12 +144,29 @@ namespace Farbod.Prefabbricato
             if (m_LabelEntries == null || m_LabelEntries.Count == 0)
                 return;
 
-            var query = string.IsNullOrEmpty(searchText)
-                ? m_LabelEntries.AsEnumerable()
-                : m_LabelEntries.Where(kvp =>
-                    kvp.Key.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0);
-
-            m_ShownLabelEntries.AddRange(query);
+            if (string.IsNullOrEmpty(searchText))
+            {
+                // No search: sort by item count (descending), then alphabetically
+                m_ShownLabelEntries.AddRange(
+                    m_LabelEntries
+                        .OrderByDescending(kvp =>
+                            AssetIndex.LabelToAssetIndex.TryGetValue(kvp.Key, out var hs)
+                                ? (hs?.Count ?? 0)
+                                : 0)
+                        .ThenBy(kvp => kvp.Key, StringComparer.OrdinalIgnoreCase)
+                );
+            }
+            else
+            {
+                // Searching: sort by relevance (match position), then alphabetically
+                m_ShownLabelEntries.AddRange(
+                    m_LabelEntries
+                        .Where(kvp => kvp.Key.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0)
+                        .OrderBy(kvp => kvp.Key.IndexOf(searchText, StringComparison.OrdinalIgnoreCase))
+                        .ThenBy(kvp => kvp.Key.Length)
+                        .ThenBy(kvp => kvp.Key, StringComparer.OrdinalIgnoreCase)
+                );
+            }
         }
 
         public void SetLabels(Dictionary<string, Color?> labels)

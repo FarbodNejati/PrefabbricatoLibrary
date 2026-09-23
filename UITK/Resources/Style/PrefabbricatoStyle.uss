@@ -154,7 +154,6 @@ SplitView #fixed-pane Toolbar {
     border-bottom-right-radius: var(--unity-metrics-default-border_radius);
     border-top-left-radius: var(--unity-metrics-default-border_radius);
     border-bottom-left-radius: var(--unity-metrics-default-border_radius);
-
     border-color: rgba(125, 125, 125, 0.1);
 }
 
@@ -234,7 +233,6 @@ SplitView #fixed-pane Toolbar {
 }
 
 .inspector-view .inspector-view_content__image > Image {
-    background-color: var(--unity-colors-preview-background);
     border-bottom-color: var(--unity-colors-preview-border);
     border-bottom-width: 1px;
     border-top-width: 1px;
@@ -249,6 +247,7 @@ SplitView #fixed-pane Toolbar {
     border-top-right-radius: var(--unity-metrics-default-border_radius);
     border-bottom-right-radius: var(--unity-metrics-default-border_radius);
     border-bottom-left-radius: var(--unity-metrics-default-border_radius);
+    background-color: rgb(82, 82, 82);
 }
 
 .inspector-view .inspector-view_content__title {
@@ -337,4 +336,10 @@ SplitView #fixed-pane Toolbar {
     border-bottom-color: var(--unity-colors-input_field-border-focus);
 }
 
+.prefabs-view_tab-view .unity-tab-view__content-container {
+    background-color: var(--unity-colors-default-background);
+}
 
+.prefabs-view_tab {
+    background-color: var(--unity-colors-window-background);
+}

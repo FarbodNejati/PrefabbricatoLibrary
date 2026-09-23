@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor;
 using UnityEngine;
 
 namespace Farbod.Prefabbricato.Backend
@@ -53,7 +54,7 @@ namespace Farbod.Prefabbricato.Backend
             return input.Select((kvp, index) => new UserLabelData(kvp.Key, kvp.Value));
         }
 
-        
+
         public static Dictionary<string, Color> GetProjectLabels(LabelSelection selection, Color fallback)
         {
             Dictionary<string, Color> assignedColors = PrefabbricatoSettings.instance.GetAssignedLabelColors();
@@ -131,7 +132,115 @@ namespace Farbod.Prefabbricato.Backend
         {
             return PrefabbricatoSettings.instance.GetLabelColor(label);
         }
+
+
+        internal class BatchLabelData
+        {
+            public readonly string[] AllLabels;
+            public readonly string[] SharedLabels;
+            public readonly string[] DifferingLabels;
+
+            public BatchLabelData(string[] allLabels, string[] sharedLabels, string[] differingLabels)
+            {
+                AllLabels = allLabels;
+                SharedLabels = sharedLabels;
+                DifferingLabels = differingLabels;
+            }
+        }
+
+        public static BatchLabelData GetBatchLabelData(IEnumerable<PrefabData> data)
+        {
+            var allLabels = data.SelectMany(p => p.labels).ToHashSet();
+
+            var sharedLabels = data
+                .Select(p => (IEnumerable<string>)p.labels)
+                .Aggregate((IEnumerable<string>)null, (acc, next) =>
+                    acc == null ? next : acc.Intersect(next))
+                ?.ToHashSet()
+                ?? new HashSet<string>();
+
+            var differingLabels = allLabels.Except(sharedLabels);
+            return new BatchLabelData(allLabels.ToArray(), sharedLabels.ToArray(), differingLabels.ToArray());
+        }
+
+        public static void RemoveLabelsFromAssets(IEnumerable<PrefabData> assets, IEnumerable<string> labels)
+        {
+            var toRemove = new HashSet<string>(labels);
+            ProcessAssets(assets, p =>
+            {
+                p.labels.RemoveAll(toRemove.Contains);
+                AssetDatabase.SetLabels(p.prefab, p.labels.ToArray());
+            });
+        }
+
+        public static void AddLabelsToAssets(IEnumerable<PrefabData> assets, IEnumerable<string> labels)
+        {
+            var toAdd = new HashSet<string>(labels);
+            ProcessAssets(assets, p =>
+            {
+                foreach (var label in toAdd)
+                {
+                    if (!p.labels.Contains(label))
+                        p.labels.Add(label);
+                }
+                AssetDatabase.SetLabels(p.prefab, p.labels.ToArray());
+            });
+        }
+
+        public static void SetLabelsOnAssets(IEnumerable<PrefabData> assets, IEnumerable<string> labels)
+        {
+            var toSet = labels.ToList();
+            ProcessAssets(assets, p =>
+            {
+                p.labels.Clear();
+                p.labels.AddRange(toSet);
+                AssetDatabase.SetLabels(p.prefab, p.labels.ToArray());
+            });
+        }
+
+        public static void RemoveLabelFromAllAssets(string label)
+        {
+            if (!AssetIndex.LabelToAssetIndex.TryGetValue(label, out var assetGuids) || assetGuids == null || assetGuids.Count == 0)
+                return;
+
+            // Snapshot the GUIDs, since RemoveLabelsFromAssets will mutate the index
+            var guidsSnapshot = assetGuids.ToArray();
+
+            // Resolve GUIDs -> PrefabData entries (or asset paths, depending on what the utility expects)
+            var prefabs = new List<PrefabData>(guidsSnapshot.Length);
+            foreach (var guid in guidsSnapshot)
+            {
+                var prefab = AssetIndex.PrefabDataList.FirstOrDefault(p => p.guid == guid);
+                if (prefab != null)
+                    prefabs.Add(prefab);
+            }
+
+            if (prefabs.Count > 0)
+                LabelUtilities.RemoveLabelsFromAssets(prefabs, new[] { label });
+
+            // Ensure the label entry itself is cleaned up from LabelToAssetIndex,
+            // in case the utility doesn't clear empty entries
+            if (AssetIndex.LabelToAssetIndex.TryGetValue(label, out var remaining) && (remaining == null || remaining.Count == 0))
+                AssetIndex.LabelToAssetIndex.Remove(label);
+        }
+        private static void ProcessAssets(IEnumerable<PrefabData> assets, System.Action<PrefabData> action)
+        {
+            AssetDatabase.StartAssetEditing();
+            try
+            {
+                foreach (var p in assets)
+                {
+                    if (p.prefab != null)
+                        action(p);
+                }
+            }
+            finally
+            {
+                AssetDatabase.StopAssetEditing();
+            }
+        }
     }
+
     internal static class PathUtilities
     {
         public static string GetAbsolutePathFromProject(string relativePath)
@@ -306,4 +415,5 @@ namespace Farbod.Prefabbricato.Backend
                 return $"an absurdly long time ago";
         }
     }
+
 }

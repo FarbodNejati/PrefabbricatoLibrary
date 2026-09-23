@@ -1,6 +1,7 @@
 ﻿using Farbod.Prefabbricato.Backend;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 
@@ -39,7 +40,7 @@ namespace Farbod.Prefabbricato
         internal event Action<IReadOnlyList<PrefabData>> selectionChanged;
         internal event Action<PrefabData> itemDoubleClicked;
         internal event Action<string> labelClicked;
-        internal event Action<string, ContextualMenuPopulateEvent> labelContextMenu;
+        internal event Action<ContextualMenuPopulateEvent, IReadOnlyList<PrefabData>> assetsContextMenu;
 
 
         private List<PrefabData> m_Data = new();
@@ -118,10 +119,13 @@ namespace Farbod.Prefabbricato
                 _ => new PrefabCompactListView()
             };
 
-            view.selectionChanged += items => selectionChanged?.Invoke(items);
+            view.selectionChanged += items =>
+            {
+                selectionChanged?.Invoke(items);
+            };
             view.itemDoubleClicked += data => itemDoubleClicked?.Invoke(data);
             view.assetLabelClicked += name => labelClicked?.Invoke(name);
-            view.labelContextMenu += (name, evt) => labelContextMenu?.Invoke(name, evt);
+            view.buildAssetContextMenu += (evt, assets) => assetsContextMenu?.Invoke(evt, assets);
 
             m_Views[mode] = view;
             return view;

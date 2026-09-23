@@ -29,10 +29,10 @@ namespace Farbod.Prefabbricato
         public VisualElement Self => this;
 
         public event Action<IReadOnlyList<PrefabData>> selectionChanged;
-        public event Action<IReadOnlyList<PrefabData>> dragStarted;
+        public event Action<IReadOnlyList<PrefabData>> assetDragStarted;
         public event Action<PrefabData> itemDoubleClicked;
         public event Action<string> assetLabelClicked;
-        public event Action<string, ContextualMenuPopulateEvent> labelContextMenu;
+        public event Action<ContextualMenuPopulateEvent, IReadOnlyList<PrefabData>> buildAssetContextMenu;
 
         internal PrefabCompactListView()
         {
@@ -74,6 +74,7 @@ namespace Farbod.Prefabbricato
             SetupDragEvents();
         }
 
+        internal List<PrefabData> Selection => m_ListView.selectedItems?.Select(d => (PrefabData)d).ToList();
         private Vector2 drag_start_pos;
         private bool m_Dragging = false;
         private List<PrefabData> m_DragItems = null;
@@ -81,18 +82,25 @@ namespace Farbod.Prefabbricato
         bool m_MouseDown = false;
         private void SetupDragEvents()
         {
+            m_ListView.AddManipulator(new ContextualMenuManipulator(e =>
+            {
+                var selection = Selection;
+                if (selection?.Count() > 0)
+                    buildAssetContextMenu?.Invoke(e, selection);
+            }));
             //Register drag events on the list view
             m_ListView.RegisterCallback<MouseDownEvent>(evt =>
             {
-                m_DragItems?.Clear();
-                m_MouseDown = false;
-
+                 //Right Click
                 if (evt.button == 1)
                     return;
 
-                if (m_ListView.selectedItems?.Count() > 0)
+                m_DragItems?.Clear();
+                m_MouseDown = false;
+
+                if (Selection?.Count() > 0)
                 {
-                    m_DragItems = m_ListView.selectedItems.Select(d => (PrefabData)d).ToList();
+                    m_DragItems = Selection.Select(d => (PrefabData)d).ToList();
                 }
                 if (m_DragItems?.Count() > 0)
                 {
@@ -135,7 +143,7 @@ namespace Farbod.Prefabbricato
                 DragAndDrop.StartDrag("Dragging");
                 DragAndDrop.objectReferences = m_DragItems.Select(d => d.prefab).ToArray();
                 DragAndDrop.paths = m_DragItems.Select(d => d.assetPath).ToArray();
-                dragStarted?.Invoke(m_DragItems);
+                assetDragStarted?.Invoke(m_DragItems);
             }
             
         }
@@ -155,6 +163,8 @@ namespace Farbod.Prefabbricato
                     alignItems = Align.Center,
                     paddingLeft = 4,
             } };
+
+
             var icon = new VisualElement();
             icon.style.width = 16;
             icon.style.height = 16;
@@ -186,8 +196,7 @@ namespace Farbod.Prefabbricato
                     hasIcon: false
                     );
                 label.onClick += assetLabelClicked;
-                label.onContextMenu += labelContextMenu;
-                
+
                 ve.Add(label);
             }
         }

@@ -1,6 +1,8 @@
+using Farbod.Prefabbricato.Backend;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -21,24 +23,27 @@ namespace Farbod.Prefabbricato
         private readonly static string m_contentUssClassName = ussClassName + "_content";
         private readonly static string m_contentImageUssClassName = ussClassName + "_content__image";
         private readonly static string m_contentTitleUssClassName = ussClassName + "_content__title";
-        private readonly static string m_TagContainerUssClassName = ussClassName + "_content__labels";
-        private readonly static string m_TagFieldUssClassName = ussClassName + "_content__label-field";
+        private readonly static string m_LabelContainerUssClassName = ussClassName + "_content__labels";
+        private readonly static string m_LabelFieldUssClassName = ussClassName + "_content__label-field";
 
 
         internal DropdownMenu m_ToolbarDropdown;
         private VisualElement m_Content;
         private Image m_ContentImage;
         private Label m_ContentTitle;
-        private VisualElement m_ContentTagContainer;
-        private TextField m_AddTagField;
-        private Button m_AddTagButton;
+        private VisualElement m_ContentLabelContainer;
+        private TextField m_AddLabelField;
+        private Button m_AddLabelButton;
 
-        internal Dictionary<string, VisualElement> activeTags { get; private set; } = new(0);
-        private Action<string[]> onLabelsChange = null;
+        internal Dictionary<string, VisualElement> activeLabels { get; private set; } = new(0);
+        //private Action<string[]> onLabelsChange = null;
         internal event Action<string> onLabelClicked;
         internal event Action<string, ContextualMenuPopulateEvent> onLabelContextMenu;
 
         public override VisualElement contentContainer => null;
+
+        IEnumerable<PrefabData> inspectTargets = null;
+
 
 #if !UNITY_2023_2_OR_NEWER
         public new class UxmlFactory : UxmlFactory<VisualElement, UxmlTraits> {}
@@ -105,7 +110,7 @@ namespace Farbod.Prefabbricato
 
             //Image
             m_ContentImage = new Image(); //Main image element
-            m_ContentImage.scaleMode = ScaleMode.ScaleAndCrop;
+            m_ContentImage.scaleMode = ScaleMode.ScaleToFit;
             var imageWrapper = new VisualElement(); //Wrapper
             imageWrapper.AddToClassList(m_contentImageUssClassName); //Add classname to wrapper
 
@@ -122,85 +127,142 @@ namespace Farbod.Prefabbricato
             m_ContentTitle.AddToClassList(m_contentTitleUssClassName);
             info.Add(m_ContentTitle);
 
-            //Add Tag field above tags
-            m_AddTagField = new TextField();
-            m_AddTagField.label = "Labels";
+            //Add Label field above tags
+            m_AddLabelField = new TextField();
+            m_AddLabelField.label = "Labels";
 
 #if UNITY_2023_2_OR_NEWER
-            m_AddTagField.textEdition.placeholder = "new label"; //placeholder
-            m_AddTagField.maxLength = TAG_ADD_MAX_LENGTH;
+            m_AddLabelField.textEdition.placeholder = "new label"; //placeholder
+            m_AddLabelField.maxLength = TAG_ADD_MAX_LENGTH;
 #endif
-            m_AddTagField.AddToClassList(m_TagFieldUssClassName);
+            m_AddLabelField.AddToClassList(m_LabelFieldUssClassName);
             //Add tag from field when field is submitted
-            m_AddTagField.RegisterCallback<KeyDownEvent>(evt => CatchFieldSubmit(evt, AddTagFromField), TrickleDown.TrickleDown);
+            m_AddLabelField.RegisterCallback<KeyDownEvent>(evt => CatchFieldSubmit(evt, AddLabelFromField), TrickleDown.TrickleDown);
+            info.Add(m_AddLabelField);
 
-            info.Add(m_AddTagField);
+            //Add Label Button
+            m_AddLabelButton = new Button();
+            m_AddLabelButton.text = "+";
+            m_AddLabelButton.clicked += AddLabelFromField;
 
-            //Add Tag Button
-            m_AddTagButton = new Button();
-            m_AddTagButton.text = "+";
-            m_AddTagButton.clicked += AddTagFromField;
+            m_AddLabelField.Q(className: "unity-text-field").Add(m_AddLabelButton);
 
-            m_AddTagField.Q(className: "unity-text-field").Add(m_AddTagButton);
-
-            //Tag container
-            m_ContentTagContainer = new VisualElement();
-            m_ContentTagContainer.AddToClassList(m_TagContainerUssClassName);
-            info.Add(m_ContentTagContainer);
+            //Label container
+            m_ContentLabelContainer = new VisualElement();
+            m_ContentLabelContainer.AddToClassList(m_LabelContainerUssClassName);
+            info.Add(m_ContentLabelContainer);
         }
+        VisualElement m_DifferingLabelsElement;
+        internal void SetContent(IEnumerable<PrefabData> assets)
+        {
+            //Empty
+            if (assets == null || assets.Count() == 0)
+            {
+                ClearContent();
+                return;
+            }
+
+            //Single Item
+            if (assets.Count() == 1)
+            {
+                m_Content.SetEnabled(true);
+                var asset = assets.First();
+                SetContent(AssetPreview.GetAssetPreview(asset.prefab), asset.name, asset.labels);
+                inspectTargets = assets;
+            }
+            //Batch
+            else
+            {
+                var labels = LabelUtilities.GetBatchLabelData(assets);
+
+                m_Content.SetEnabled(true);
+                m_ContentImage.image = null;
+                m_ContentImage.SetEnabled(false);
+                m_ContentTitle.text = $"{assets.Count()} items";
+
+                SetLabels(labels.SharedLabels);
+
+                if(labels.DifferingLabels?.Length > 0)
+                {
+                    m_DifferingLabelsElement = new AssetLabelElement("Differing Labels", null, Backend_RemoveDifferingLabels, true);
+                    m_DifferingLabelsElement.tooltip = string.Join(", ", labels.DifferingLabels);
+                    m_ContentLabelContainer.Add(m_DifferingLabelsElement);
+                }
+                inspectTargets = assets;
+            }
+        }
+
+
         internal void ClearContent()
         {
             SetContent(null, null, null);
-            //m_Content.SetEnabled(false);
+            m_Content.SetEnabled(false);
         }
-        internal void SetContent(Texture preview, string title, string[] tags, Action<string[]> onTagsChange = null)
+        
+        private void SetContent(Texture preview, string title, List<string> tags)
         {
             m_Content.SetEnabled(true);
 
+            m_ContentImage.SetEnabled(preview!=null);
             m_ContentImage.image = preview ?? null;
             m_ContentTitle.text = !string.IsNullOrEmpty(title) ? title : "Nothing To Show";
-            this.onLabelsChange = onTagsChange;
+            SetLabels(tags);
         }
+        
 
         /// <summary>
         /// Set a list of tags for the displayed content.
         /// Provide null to clear tags.
         /// </summary>
-        private void SetTags(Dictionary<string, Color> tags)
+        private void SetLabels(IEnumerable<string> tags)
         {
             //Clear tags
-            m_ContentTagContainer.Clear();
-            activeTags.Clear();
+            m_ContentLabelContainer.Clear();
+            activeLabels.Clear();
 
-            if (tags == null || tags.Count == 0)
+            if (tags == null || tags.Count() == 0)
                 return;
 
-            foreach (var item in tags)
+            foreach (var tag in tags)
             {
-                AddTag(item.Key, item.Value);
+                var color = LabelUtilities.GetLabelColor(tag);
+                AddLabel(tag, color);
             }
+
+            
         }
-        private void AddTag(string text, Color? color, bool canRemove = true)
+        private void AddLabel(string text, Color? color)
         {
 
-            if (string.IsNullOrEmpty(text) || activeTags.ContainsKey(text))
+            if (string.IsNullOrEmpty(text) || activeLabels.ContainsKey(text))
                 return;
-
-            var label = new AssetLabelElement(text,color,RemoveTag);
+            var label = new AssetLabelElement(text,color, RemoveLabel, false);
             label.onClick += onLabelClicked;
             label.onContextMenu += onLabelContextMenu;
 
-            m_ContentTagContainer.Add(label);
+            if (m_DifferingLabelsElement != null)
+                m_ContentLabelContainer.Insert(activeLabels.Count, label);
+            else
+                m_ContentLabelContainer.Add(label);
 
 
-            activeTags.Add(text, label);
-            onLabelsChange?.Invoke(activeTags.Keys.ToArray());
+            activeLabels.Add(text, label);
+
+            void RemoveLabel(string text)
+            {
+                //Remove tag VisualElement
+                if (activeLabels.TryGetValue(text, out var ve))
+                    m_ContentLabelContainer.Remove(ve);
+
+                activeLabels.Remove(text);
+                Backend_RemoveLabel(text); //Backend asset operations
+            }
         }
 
-        //private void AddTag(string text, Color? color, bool canRemove = true)
+        //private void AddLabel(string text, Color? color, bool canRemove = true)
         //{
 
-        //    if (string.IsNullOrEmpty(text) || activeTags.ContainsKey(text))
+        //    if (string.IsNullOrEmpty(text) || activeLabels.ContainsKey(text))
         //        return;
 
         //    #region template
@@ -209,7 +271,7 @@ namespace Farbod.Prefabbricato
 
         //    var tag = new VisualElement();
         //    tag.style.backgroundColor = finalColor;
-        //    tag.AddToClassList(m_TagUssClassName);
+        //    tag.AddToClassList(m_LabelUssClassName);
 
         //    var label = new Label(text);
         //    tag.Add(label);
@@ -217,13 +279,13 @@ namespace Farbod.Prefabbricato
         //    //Remove button + callback
         //    if (canRemove)
         //    {
-        //        Button remove_button = new(() => RemoveTag(text));
+        //        Button remove_button = new(() => RemoveLabel(text));
         //        remove_button.text = "x";
         //        remove_button.tooltip = "Remove label from asset";
         //        tag.Add(remove_button);
         //    }
 
-        //    m_ContentTagContainer.Add(tag);
+        //    m_ContentLabelContainer.Add(tag);
         //    #endregion
 
         //    #region events
@@ -236,26 +298,17 @@ namespace Farbod.Prefabbricato
 
 
 
-        //    activeTags.Add(text, tag);
-        //    onLabelsChange?.Invoke(activeTags.Keys.ToArray());
+        //    activeLabels.Add(text, tag);
+        //    onLabelsChange?.Invoke(activeLabels.Keys.ToArray());
         //}
-        private void RemoveTag(string text)
+        
+        private void AddLabelFromField()
         {
-            //Remove tag VisualElement
-            if (activeTags.TryGetValue(text, out var ve))
-                m_ContentTagContainer.Remove(ve);
+            string label = m_AddLabelField.value.Trim();
+            AddLabel(label, LabelUtilities.GetLabelColor(label));
+            m_AddLabelField.value = "";
 
-            activeTags.Remove(text);
-
-            if (onLabelsChange != null)
-            {
-                onLabelsChange.Invoke(activeTags.Keys.ToArray());
-            }
-        }
-        private void AddTagFromField()
-        {
-            AddTag(m_AddTagField.value.Trim(), null);
-            m_AddTagField.value = "";
+            Backend_AddLabel(label);
         }
         private void CatchFieldSubmit(KeyDownEvent evt, Action onSubmit)
         {
@@ -273,6 +326,42 @@ namespace Farbod.Prefabbricato
             }
 
 
+        }
+
+
+        private void Backend_AddLabel(string label)
+        {
+            //Return if label is not valid
+            if (string.IsNullOrEmpty(label) || label?.Trim().Length == 0)
+                return;
+
+            //Return if not inspecting assets
+            if (inspectTargets?.Count() < 1)
+                return;
+
+            LabelUtilities.AddLabelsToAssets(inspectTargets, new string[] { label });
+        }
+        private void Backend_RemoveDifferingLabels(string obj)
+        {
+            //Return if not inspecting multiple assets
+            if (inspectTargets?.Count() <= 1)
+                return;
+
+            m_DifferingLabelsElement?.RemoveFromHierarchy();
+            var labels = LabelUtilities.GetBatchLabelData(inspectTargets);
+            LabelUtilities.RemoveLabelsFromAssets(inspectTargets, labels.DifferingLabels);
+        }
+        private void Backend_RemoveLabel(string label)
+        {
+            //Return if label is not valid
+            if (string.IsNullOrEmpty(label) || label?.Trim().Length == 0)
+                return;
+
+            //Return if not inspecting assets
+            if (inspectTargets?.Count() < 1)
+                return;
+
+            LabelUtilities.RemoveLabelsFromAssets(inspectTargets, new string[]{label});
         }
     }
 }

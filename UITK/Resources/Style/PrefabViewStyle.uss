@@ -25,17 +25,17 @@
     min-width: 83px;
     padding-right: 7px;
     padding-left: 9px;
-    background-color: rgba(0, 0, 0, 0);
     height: 100%;
     min-height: 0;
+    background-color: rgba(0, 0, 0, 0);
 }
 
 .prefabs-view_tab-view .unity-tab__header:hover {
-    background-color: var(--unity-colors-app_toolbar_button-border_accent);
+    background-color: var(--unity-colors-tab-background-hover);
 }
 
 .prefabs-view_tab-view .unity-tab__header:checked {
-    background-color: rgb(60, 60, 60);
+    background-color: var(--unity-colors-tab-background-checked);
 }
 
 .prefabs-view_tab-view .unity-tab__header:checked .unity-tab__header-underline {

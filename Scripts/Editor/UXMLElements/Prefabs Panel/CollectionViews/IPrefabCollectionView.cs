@@ -16,6 +16,8 @@ namespace Farbod.Prefabbricato
         event Action<IReadOnlyList<PrefabData>> selectionChanged;
         event Action<PrefabData> itemDoubleClicked;
         event Action<string> assetLabelClicked;
-        event Action<string, ContextualMenuPopulateEvent> labelContextMenu;
+        event Action<IReadOnlyList<PrefabData>> assetDragStarted;
+        event Action<ContextualMenuPopulateEvent, IReadOnlyList<PrefabData>> buildAssetContextMenu;
+        
     }
 }

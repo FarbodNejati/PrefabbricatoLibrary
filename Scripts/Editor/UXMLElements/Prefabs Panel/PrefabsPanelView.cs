@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Farbod.Prefabbricato.Backend;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -40,6 +41,9 @@ namespace Farbod.Prefabbricato
         internal List<PrefabsTab> allTabs { get; private set; } = new();
         internal PrefabsTab activeTab { get; private set; }
         internal event Action<PrefabsTab> activeTabChanged;
+        internal event Action<IReadOnlyList<PrefabData>> selectionChanged;
+        internal event Action<ContextualMenuPopulateEvent, IReadOnlyList<PrefabData>> assetsContextMenu;
+
         public PrefabPanelView()
         {
             //Load default stylesheet
@@ -158,12 +162,13 @@ namespace Farbod.Prefabbricato
 
             allTabs.Add(prefabsTab);
             tab.closed += (t) => allTabs.Remove(prefabsTab);
-
             tab.Add(prefabsTab);
             m_TabView.Add(tab);
 
             int tabCount = m_TabView.childCount;
+
             m_TabView.selectedTabIndex = tabCount-1;
+            ActiveTabChanged(null, tab);
         }
 
         private void BuildTabContextMenu(DropdownMenu menu, Tab tab)
@@ -192,8 +197,14 @@ namespace Farbod.Prefabbricato
 
         private void ActiveTabChanged(Tab oldTab, Tab newTab)
         {
+            if(activeTab!=null)
+                activeTab.selectionChanged -= selectionChanged;
             activeTab = newTab.Q<PrefabsTab>();
+
             activeTabChanged?.Invoke(activeTab);
+            activeTab.selectionChanged += i=> {
+                selectionChanged?.Invoke(i);
+            };
         }
     }
 }
