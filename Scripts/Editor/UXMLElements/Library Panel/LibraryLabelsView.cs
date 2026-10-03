@@ -99,12 +99,39 @@ namespace Farbod.Prefabbricato
 
                 //Get label name by index
                 var labelName = m_ShownLabelEntries[idx].Key;
-                onLabelContextMenu?.Invoke(labelName, e);
+
+                PopulateLabelContextMenu(labelName, e);
+                
             }));
             #endregion
 
             return container;
         }
+
+        private void PopulateLabelContextMenu(string labelName, ContextualMenuPopulateEvent e)
+        {
+            var menu = e.menu;
+
+            #region custom options
+            if (onLabelContextMenu != null)
+            {
+                onLabelContextMenu?.Invoke(labelName, e);
+
+                //Add seperator
+                if(menu.MenuItems().Count()>0)
+                    menu.AppendSeparator();
+            }
+            #endregion
+
+            #region default options
+
+            menu.AppendAction("Clear from all assets", e => {
+                LabelUtilities.ClearLabelFromAllAssets(labelName);
+            });
+
+            #endregion
+        }
+
         private void BindEntry(VisualElement element, int index)
         {
             if (index >= m_ShownLabelEntries.Count) return;

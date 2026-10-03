@@ -42,7 +42,7 @@ namespace Farbod.Prefabbricato
         internal PrefabsTab activeTab { get; private set; }
         internal event Action<PrefabsTab> activeTabChanged;
         internal event Action<IReadOnlyList<PrefabData>> selectionChanged;
-        internal event Action<ContextualMenuPopulateEvent, IReadOnlyList<PrefabData>> assetsContextMenu;
+        internal event Action<DropdownMenu, IReadOnlyList<PrefabData>> assetsContextMenu;
 
         public PrefabPanelView()
         {
@@ -125,8 +125,8 @@ namespace Farbod.Prefabbricato
             tab.contentContainer.style.flexGrow = 1;
             PrefabsTab prefabsTab = new PrefabsTab(tab, null);
             prefabsTab.style.flexGrow = 1;
+            
 
-           
 
             #region tab-seperator
             //This does not appear without custom styling
@@ -157,8 +157,13 @@ namespace Farbod.Prefabbricato
                 //var tab = m_TabView.GetTab(index);
 
                 if (tab != null)
-                    BuildTabContextMenu(e.menu, tab);
+                    BuildTabHeaderContextMenu(e.menu, tab);
             }));
+
+            prefabsTab.assetsContextMenu += (e, a) =>
+            {
+                assetsContextMenu?.Invoke(e.menu, a);
+            };
 
             allTabs.Add(prefabsTab);
             tab.closed += (t) => allTabs.Remove(prefabsTab);
@@ -171,7 +176,7 @@ namespace Farbod.Prefabbricato
             ActiveTabChanged(null, tab);
         }
 
-        private void BuildTabContextMenu(DropdownMenu menu, Tab tab)
+        private void BuildTabHeaderContextMenu(DropdownMenu menu, Tab tab)
         {
             menu.AppendAction("Close", e => { tab.RemoveFromHierarchy(); });
             menu.AppendSeparator();

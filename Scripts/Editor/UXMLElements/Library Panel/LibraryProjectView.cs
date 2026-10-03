@@ -406,8 +406,8 @@ namespace Farbod.Prefabbricato
             }
 
             // Always available, regardless of allowFileActions.
-            evt.menu.AppendAction("Show In Project", _ => PingInProjectWindow(entry.RelativePath));
-            evt.menu.AppendAction("Show In Explorer", _ => PingInFileExplorer(entry.RelativePath));
+            evt.menu.AppendAction("Show In Project", _ => PathUtilities.PingAssetInProjectWindow(entry.RelativePath));
+            evt.menu.AppendAction("Show In Explorer", _ => PathUtilities.OpenAssetInExplorer(entry.RelativePath));
 
             // Prevent this from bubbling up into the background menu below.
             evt.StopPropagation();
@@ -426,28 +426,12 @@ namespace Farbod.Prefabbricato
                 evt.menu.AppendSeparator();
             }
 
-            evt.menu.AppendAction("Show In Explorer", _ => PingInFileExplorer(_rootRelativePath));
-            evt.menu.AppendAction("Show In Project", _ => PingInProjectWindow(_rootRelativePath));
+            evt.menu.AppendAction("Show In Project", _ => PathUtilities.PingAssetInProjectWindow(_rootRelativePath));
+            evt.menu.AppendAction("Show In Explorer", _ => PathUtilities.OpenAssetInExplorer(_rootRelativePath));
+            
             evt.menu.AppendAction("Change Library Path", _ => PrefabbricatoSettings.SelectLibraryDirectory());
         }
 
-        private static void PingInProjectWindow(string relativePath)
-        {
-            var asset = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(relativePath);
-            if (asset == null)
-            {
-                Debug.LogWarning($"[ProjectTreeView] Could not find an asset at '{relativePath}' to select in the Project window.");
-                return;
-            }
-
-            Selection.activeObject = asset;
-            EditorGUIUtility.PingObject(asset);
-        }
-
-        protected virtual void PingInFileExplorer(string relativePath)
-        {
-            PathUtilities.OpenInFileBrowser(PathUtilities.GetAbsolutePathFromProject(relativePath));
-        }
 
         // ---------------------------------------------------------------
         // Rename (allowFileActions)

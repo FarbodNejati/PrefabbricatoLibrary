@@ -1,4 +1,5 @@
-﻿using UnityEditor;
+﻿using System;
+using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -50,6 +51,14 @@ namespace Farbod.Prefabbricato
             self.
                 Q(className: ToolbarMenu.arrowUssClassName)
                 .style.backgroundImage = img;
+
+            return self;
+        }
+
+        public static DropdownMenu AppendAction(this DropdownMenu self, string actionName, Action<DropdownMenuAction> action, bool enabled = true)
+        {
+            DropdownMenuAction.Status status = enabled ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled;
+            self.AppendAction(actionName, action, status);
 
             return self;
         }

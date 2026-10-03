@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
@@ -198,7 +199,7 @@ namespace Farbod.Prefabbricato.Backend
             });
         }
 
-        public static void RemoveLabelFromAllAssets(string label)
+        public static void ClearLabelFromAllAssets(string label, bool askConfirm = true)
         {
             if (!AssetIndex.LabelToAssetIndex.TryGetValue(label, out var assetGuids) || assetGuids == null || assetGuids.Count == 0)
                 return;
@@ -215,13 +216,47 @@ namespace Farbod.Prefabbricato.Backend
                     prefabs.Add(prefab);
             }
 
-            if (prefabs.Count > 0)
-                LabelUtilities.RemoveLabelsFromAssets(prefabs, new[] { label });
+            if (prefabs.Count == 0)
+                return;
+
+            //Confirmation prompt
+            if(askConfirm &&
+                !EditorUtility.DisplayDialog(
+                    "Clear from assets",
+                    $"Remove '{label}' from {prefabs.Count} prefabs?",
+                    "Confirm",
+                    "Cancel"))
+            {
+                return;
+            }
+            
+                
+            LabelUtilities.RemoveLabelsFromAssets(prefabs, new[] { label });
 
             // Ensure the label entry itself is cleaned up from LabelToAssetIndex,
             // in case the utility doesn't clear empty entries
             if (AssetIndex.LabelToAssetIndex.TryGetValue(label, out var remaining) && (remaining == null || remaining.Count == 0))
                 AssetIndex.LabelToAssetIndex.Remove(label);
+        }
+
+        public static void ClearLabelsFromAssets(IEnumerable<PrefabData> assets, bool askConfirm = true)
+        {
+            //Confirmation prompt
+            if (askConfirm &&
+                !EditorUtility.DisplayDialog(
+                    "Clear Labels",
+                    $"Clear all labels from {assets.Count()} selected prefabs?",
+                    "Confirm",
+                    "Cancel"))
+            {
+                return;
+            }
+            
+            ProcessAssets(assets, p =>
+            {
+                p.labels = new();
+                AssetDatabase.ClearLabels(p.prefab);
+            });
         }
         private static void ProcessAssets(IEnumerable<PrefabData> assets, System.Action<PrefabData> action)
         {
@@ -237,6 +272,40 @@ namespace Farbod.Prefabbricato.Backend
             finally
             {
                 AssetDatabase.StopAssetEditing();
+            }
+        }
+
+        public static void CopyLabelsToClipboard(IEnumerable<PrefabData> assets)
+        {
+            IEnumerable<string> labels = LabelUtilities.GetBatchLabelData(assets).AllLabels;
+            CopyLabelsToClipboard(labels);
+        }
+
+        private const string CopiedLabelsPrefix = "Labels: ";
+        public static void CopyLabelsToClipboard(IEnumerable<string> labels)
+        {
+            string json = CopiedLabelsPrefix + "\n" + string.Join("\n", labels.Select(s => "-" + s));
+            EditorGUIUtility.systemCopyBuffer = json;
+        }
+        public static bool TryParseLabelsFromClipboard(out string[] labels)
+        {
+            labels = null;
+            string clipboard = EditorGUIUtility.systemCopyBuffer;
+
+            if (string.IsNullOrEmpty(clipboard) || !clipboard.StartsWith(CopiedLabelsPrefix) || !clipboard.Contains("-"))
+                return false;
+
+            try
+            {
+                string rawList = clipboard.Substring(CopiedLabelsPrefix.Length).Trim();
+                string[] split = rawList.Split("-").Select(s => s.Trim()).Where(s => !string.IsNullOrWhiteSpace(s)).ToArray();
+
+                labels = split;
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
             }
         }
     }
@@ -387,6 +456,20 @@ namespace Farbod.Prefabbricato.Backend
                 // Very strange behavior, so we use EditorUtility.RevealInFinder only as our last resort.
                 UnityEditor.EditorUtility.RevealInFinder(path);
 #endif
+            }
+        }
+
+        public static void OpenAssetInExplorer(string relativePath)
+        {
+            PathUtilities.OpenInFileBrowser(PathUtilities.GetAbsolutePathFromProject(relativePath));
+        }
+        public static void PingAssetInProjectWindow(string relativePath)
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(relativePath);
+            if (asset != null)
+            {
+                Selection.activeObject = asset;
+                EditorGUIUtility.PingObject(asset);
             }
         }
     }

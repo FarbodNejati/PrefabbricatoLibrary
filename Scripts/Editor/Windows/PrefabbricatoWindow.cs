@@ -1,5 +1,4 @@
 using Farbod.Prefabbricato.Backend;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
@@ -103,8 +102,11 @@ namespace Farbod.Prefabbricato
             //Labels
             m_LibraryView.LabelsView.onLabelContextMenu += BuildLabelContextMenu;
             m_Inspector.onLabelContextMenu += BuildLabelContextMenu;
-
             m_PrefabPanel.selectionChanged += AssetSelected;
+
+            //Asset context menu
+            m_PrefabPanel.assetsContextMenu += BuildAssetContextMenu;
+            m_Inspector.assetActionsMenu += BuildAssetContextMenu;
 
             //------------------BACKEND EVENTS  --------------------
 
@@ -141,12 +143,39 @@ namespace Farbod.Prefabbricato
         private void BuildLabelContextMenu(string label, ContextualMenuPopulateEvent evt)
         {
             var menu = evt.menu;
+            menu.AppendAction("Copy Name", e => {
+                EditorGUIUtility.systemCopyBuffer = label;
+            });
             menu.AppendAction("Edit Label", e => {
                 SettingsWindow.PingLabel(label);
             });
-            menu.AppendAction("Remove from all assets", e => {
-                LabelUtilities.RemoveLabelFromAllAssets(label);
-            });
+        }
+        private void BuildAssetContextMenu(DropdownMenu menu, IEnumerable<PrefabData> assets)
+        {
+            bool anyAsset = assets?.Count() > 0;
+            bool singleAsset = assets?.Count() == 1;
+
+            menu.AppendAction("Open In Project", _ => PathUtilities.PingAssetInProjectWindow(assets.First().assetPath), singleAsset);
+            menu.AppendAction("Show In Explorer", _ => PathUtilities.OpenAssetInExplorer(assets.First().assetPath), singleAsset);
+            menu.AppendAction("Copy Path", a =>
+            {
+                var paths = assets.Select(pd => pd.assetPath).Where(p => !string.IsNullOrEmpty(p));
+                EditorGUIUtility.systemCopyBuffer = string.Join("\n", paths);
+            }, anyAsset);
+
+            menu.AppendSeparator();
+
+            #region label operations
+            menu.AppendAction("Copy Labels", a=>LabelUtilities.CopyLabelsToClipboard(assets), anyAsset);
+
+            menu.AppendAction("Paste Labels", a =>
+            {
+                if (LabelUtilities.TryParseLabelsFromClipboard(out string[] parsed))
+                    LabelUtilities.AddLabelsToAssets(assets, parsed);
+            }, anyAsset && LabelUtilities.TryParseLabelsFromClipboard(out _));
+
+            menu.AppendAction("Clear Labels", a => { LabelUtilities.ClearLabelsFromAssets(assets); }, anyAsset);
+            #endregion
         }
         void OnIndexUpdate()
         {
@@ -172,6 +201,8 @@ namespace Farbod.Prefabbricato
             });
 
             m_LibraryView.ProjectView.Refresh();
+
+            m_Inspector.SetContent(m_Inspector.inspectTargets);
         }
         private bool CheckStartup() => PrefabbricatoSettings.IsLibrarySetUp();
         private void ShowStartMenu(VisualElement root, bool show)

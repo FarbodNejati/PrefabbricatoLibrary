@@ -34,15 +34,17 @@ namespace Farbod.Prefabbricato
         private VisualElement m_ContentLabelContainer;
         private TextField m_AddLabelField;
         private Button m_AddLabelButton;
-
         internal Dictionary<string, VisualElement> activeLabels { get; private set; } = new(0);
         //private Action<string[]> onLabelsChange = null;
         internal event Action<string> onLabelClicked;
         internal event Action<string, ContextualMenuPopulateEvent> onLabelContextMenu;
 
         public override VisualElement contentContainer => null;
+        VisualElement m_DifferingLabelsElement;
 
-        IEnumerable<PrefabData> inspectTargets = null;
+        internal IEnumerable<PrefabData> inspectTargets { get; private set; } = null;
+        private ToolbarMenu m_ToolbarMenu;
+        internal Action<DropdownMenu, IEnumerable<PrefabData>> assetActionsMenu;
 
 
 #if !UNITY_2023_2_OR_NEWER
@@ -54,6 +56,7 @@ namespace Farbod.Prefabbricato
         {
             PopulateElement();
             ClearContent();
+
         }
 
         private void PopulateElement()
@@ -76,13 +79,14 @@ namespace Farbod.Prefabbricato
             toolbar.Add(toolbar_space);
 
             //Toolbar dropdown menu
-            var toolbarMenu = new ToolbarMenu();
-            toolbarMenu.
+            m_ToolbarMenu = new ToolbarMenu();
+            m_ToolbarMenu.
                 Q(className: ToolbarMenu.arrowUssClassName)
                 .style.backgroundImage =
                 new StyleBackground(UIExtensions.GetEditorIcon("_Menu@2x"));
-            m_ToolbarDropdown = toolbarMenu.menu;
-            toolbar.Add(toolbarMenu);
+            toolbar.Add(m_ToolbarMenu);
+            PopulateToolbarMenu();
+
 
             ///----------------------------------------------
             ///-------------  Inspect Content  --------------
@@ -152,7 +156,14 @@ namespace Farbod.Prefabbricato
             m_ContentLabelContainer.AddToClassList(m_LabelContainerUssClassName);
             info.Add(m_ContentLabelContainer);
         }
-        VisualElement m_DifferingLabelsElement;
+
+        private void PopulateToolbarMenu()
+        {
+            var menu = m_ToolbarMenu.menu;
+            menu.ClearItems();
+            assetActionsMenu?.Invoke(menu, inspectTargets);
+        }
+
         internal void SetContent(IEnumerable<PrefabData> assets)
         {
             //Empty
@@ -167,8 +178,9 @@ namespace Farbod.Prefabbricato
             {
                 m_Content.SetEnabled(true);
                 var asset = assets.First();
-                SetContent(AssetPreview.GetAssetPreview(asset.prefab), asset.name, asset.labels);
+                SetDisplayContent(AssetPreview.GetAssetPreview(asset.prefab), asset.name, asset.labels);
                 inspectTargets = assets;
+                PopulateToolbarMenu();
             }
             //Batch
             else
@@ -182,33 +194,35 @@ namespace Farbod.Prefabbricato
 
                 SetLabels(labels.SharedLabels);
 
-                if(labels.DifferingLabels?.Length > 0)
+                if (labels.DifferingLabels?.Length > 0)
                 {
                     m_DifferingLabelsElement = new AssetLabelElement("Differing Labels", null, Backend_RemoveDifferingLabels, true);
                     m_DifferingLabelsElement.tooltip = string.Join(", ", labels.DifferingLabels);
                     m_ContentLabelContainer.Add(m_DifferingLabelsElement);
                 }
                 inspectTargets = assets;
+                PopulateToolbarMenu();
             }
         }
 
 
         internal void ClearContent()
         {
-            SetContent(null, null, null);
+            SetDisplayContent(null, null, null);
             m_Content.SetEnabled(false);
+            PopulateToolbarMenu();
         }
-        
-        private void SetContent(Texture preview, string title, List<string> tags)
+
+        private void SetDisplayContent(Texture preview, string title, List<string> tags)
         {
             m_Content.SetEnabled(true);
 
-            m_ContentImage.SetEnabled(preview!=null);
+            m_ContentImage.SetEnabled(preview != null);
             m_ContentImage.image = preview ?? null;
             m_ContentTitle.text = !string.IsNullOrEmpty(title) ? title : "Nothing To Show";
             SetLabels(tags);
         }
-        
+
 
         /// <summary>
         /// Set a list of tags for the displayed content.
@@ -229,14 +243,14 @@ namespace Farbod.Prefabbricato
                 AddLabel(tag, color);
             }
 
-            
+
         }
         private void AddLabel(string text, Color? color)
         {
 
             if (string.IsNullOrEmpty(text) || activeLabels.ContainsKey(text))
                 return;
-            var label = new AssetLabelElement(text,color, RemoveLabel, false);
+            var label = new AssetLabelElement(text, color, RemoveLabel, false);
             label.onClick += onLabelClicked;
             label.onContextMenu += onLabelContextMenu;
 
@@ -301,7 +315,7 @@ namespace Farbod.Prefabbricato
         //    activeLabels.Add(text, tag);
         //    onLabelsChange?.Invoke(activeLabels.Keys.ToArray());
         //}
-        
+
         private void AddLabelFromField()
         {
             string label = m_AddLabelField.value.Trim();
@@ -361,7 +375,17 @@ namespace Farbod.Prefabbricato
             if (inspectTargets?.Count() < 1)
                 return;
 
-            LabelUtilities.RemoveLabelsFromAssets(inspectTargets, new string[]{label});
+            LabelUtilities.RemoveLabelsFromAssets(inspectTargets, new string[] { label });
+        }
+        /// <summary>
+        /// Clears all asset labels assigned to the inspection targets
+        /// </summary>
+        private void Backend_ClearAllLabels()
+        {
+            if (inspectTargets?.Count() is int count && count > 0)
+            {
+                LabelUtilities.ClearLabelsFromAssets(inspectTargets, count > 1); //dont show prompt for 1 asset
+            }
         }
     }
 }
