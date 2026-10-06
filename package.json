@@ -5,5 +5,5 @@
   "description": "An Editor Window for easily organizing your Prefabs an assist Level Design.",
   "author": "Farbod Nejati",
   "unity": "2022.3",
-  "dependencies": {},
+  "dependencies": {}
 }
