@@ -48,12 +48,73 @@ namespace Farbod.Prefabbricato
             m_Root = base.rootVisualElement;
 
             PopulateWindow(m_Root);
-            RegisterCallbacks(m_Root);
+            RegisterCallbacks();
 
             //Show start up menu if needed
             ShowStartMenu(m_Root, !CheckStartup());
 
+            RestoreWindowState();
         }
+
+        #region window persistance
+        private void OnDestroy()
+        {
+            //Reset tab data
+            PrefabbricatoSettings.instance.savedTabData = new();
+            PrefabbricatoSettings.instance.activeTabIndex = 0;
+        }
+        private void OnEnable()
+        {
+            AssemblyReloadEvents.beforeAssemblyReload += SaveWindowState;
+            EditorApplication.quitting += SaveWindowState;
+        }
+
+        private void OnDisable()
+        {
+            AssemblyReloadEvents.beforeAssemblyReload -= SaveWindowState;
+            EditorApplication.quitting -= SaveWindowState;
+        }
+        private void SaveWindowState()
+        {
+            #region tabs
+            var tabs = m_PrefabPanel.allTabs;
+            if (tabs?.Count()!=0)
+            {
+                PrefabbricatoSettings.instance.savedTabData = tabs.Select<PrefabsTab, SerializableQueryData>(t => new(t.ActiveQuery)).ToList();
+                PrefabbricatoSettings.instance.activeTabIndex = m_PrefabPanel.activeTabIndex;
+            }
+            #endregion
+        }
+
+        private void RestoreWindowState()
+        {
+            #region tabs
+            if (m_PrefabPanel != null)
+            {
+                //Load saved data
+                var savedTabData = PrefabbricatoSettings.instance.savedTabData;
+                if (savedTabData?.Count() != 0)
+                {
+                    //Clear tabs
+                    m_PrefabPanel.ClearTabs();
+
+                    //Add saved tabs
+                    savedTabData.ForEach(q => m_PrefabPanel.CreateTab(q.ToQuery()));
+
+                    //Activate correct tab
+                    if (
+                        PrefabbricatoSettings.instance.activeTabIndex is int i
+                        && i < m_PrefabPanel.activeTabIndex
+                        && i >= 0)
+                    {
+                        m_PrefabPanel.activeTabIndex = i;
+                    }
+                }
+            }
+
+            #endregion
+        }
+        #endregion
 
         private void SelectRootDirectory() => PrefabbricatoSettings.SelectLibraryDirectory();
 
@@ -95,10 +156,11 @@ namespace Farbod.Prefabbricato
         /// <summary>
         /// Register events and callbacks for functionality.
         /// </summary>
-        private void RegisterCallbacks(VisualElement root)
+        private void RegisterCallbacks()
         {
-            //--------------------UX---------------------
-
+            ///-------------------------------------------
+            ///--------------------UX---------------------
+            ///-------------------------------------------
             //Labels
             m_LibraryView.LabelsView.onLabelContextMenu += BuildLabelContextMenu;
             m_Inspector.onLabelContextMenu += BuildLabelContextMenu;
@@ -108,8 +170,35 @@ namespace Farbod.Prefabbricato
             m_PrefabPanel.assetsContextMenu += BuildAssetContextMenu;
             m_Inspector.assetActionsMenu += BuildAssetContextMenu;
 
-            //------------------BACKEND EVENTS  --------------------
+            ///-----------------------------------------------------
+            ///------------------ Library View ---------------------
+            ///-----------------------------------------------------
+            //Labels
+            m_LibraryView.LabelsView.OpenLabel += (l) =>
+            {
+                var tab = m_PrefabPanel.ActiveOrNewTab();
+                tab.ActiveQuery.Reset();
+                tab.ActiveQuery.SetLabels(new string[] { l });
+                tab.Refresh();
+            };
+            //Path
+            m_LibraryView.ProjectView.OpenFolder += (p) =>
+            {
+                var tab = m_PrefabPanel.ActiveOrNewTab();
+                tab.ActiveQuery.Reset();
+                tab.ActiveQuery.SetPaths(new string[] { p });
+                tab.Refresh();
+            };
+            m_LibraryView.ProjectView.OpenFolderInNewTab += (p) =>
+            {
+                var tab = m_PrefabPanel.CreateTab(
+                    new Query().SetPaths(new string[] { p })
+                    );
+            };
 
+            ///--------------------------------------------------
+            ///----------------BACKEND EVENTS  ------------------
+            ///--------------------------------------------------
             //Show getting started overlay when root becomes invalid
             PrefabbricatoSettings.onLibraryChange += (newPath) =>
             {
@@ -127,6 +216,7 @@ namespace Farbod.Prefabbricato
             AssetIndex.onAssetAdded += _ => OnIndexUpdate();
             AssetIndex.onAssetRemoved += _ => OnIndexUpdate();
             AssetIndex.onAssetLabelsChanged += _ => OnIndexUpdate();
+            AssetIndex.onAssetLabelsChanged += _ => m_Inspector.SetContent(m_Inspector.inspectTargets);
             AssetIndex.onAssetMoved += _ => OnIndexUpdate();
 
             PrefabbricatoSettings.onLabelColorUpdate += (l) => m_LibraryView.LabelsView.SetLabels(LabelUtilities.GetProjectLabels());
@@ -143,6 +233,19 @@ namespace Farbod.Prefabbricato
         private void BuildLabelContextMenu(string label, ContextualMenuPopulateEvent evt)
         {
             var menu = evt.menu;
+
+            //Labels
+            menu.AppendAction("Open Label", e => {
+                var tab = m_PrefabPanel.ActiveOrNewTab();
+                tab.ActiveQuery.Reset();
+                tab.ActiveQuery.SetLabels(new string[] { label });
+                tab.Refresh();
+            });
+            menu.AppendAction("Open In New Tab", e => {
+                var tab = m_PrefabPanel.CreateTab(
+                    new Query().SetLabels(new string[] { label })
+                    );
+            });
             menu.AppendAction("Copy Name", e => {
                 EditorGUIUtility.systemCopyBuffer = label;
             });
@@ -202,7 +305,7 @@ namespace Farbod.Prefabbricato
 
             m_LibraryView.ProjectView.Refresh();
 
-            m_Inspector.SetContent(m_Inspector.inspectTargets);
+            //m_Inspector.SetContent(m_Inspector.inspectTargets);
         }
         private bool CheckStartup() => PrefabbricatoSettings.IsLibrarySetUp();
         private void ShowStartMenu(VisualElement root, bool show)

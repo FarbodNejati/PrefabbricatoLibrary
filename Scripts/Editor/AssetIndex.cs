@@ -50,7 +50,18 @@ namespace Farbod.Prefabbricato.Backend
         /// </summary>
         internal static Dictionary<string, HashSet<string>> AssetToLabelIndex { get; private set; } = new();
 
+        /// <summary>
+        /// Each normalized name token points to the GUIDs of prefabs containing that token.
+        /// This is the candidate index used by UserQuery.
+        /// </summary>
+        internal static Dictionary<string, HashSet<string>> TokenToAssetIndex { get; private set; } = new();
+
         internal static List<PrefabData> PrefabDataList { get; private set; } = new();
+
+        /// <summary>
+        /// Runtime-only GUID lookup so token candidates can be resolved without scanning PrefabDataList.
+        /// </summary>
+        private static Dictionary<string, PrefabData> GuidToPrefabData { get; } = new();
         /// <summary>
         /// Each indexed Prefab GUID to its data.
         /// </summary>
@@ -122,12 +133,29 @@ namespace Farbod.Prefabbricato.Backend
 
                 //Build asset guid to label index
                 AssetToLabelIndex = ReverseIndex(LabelToAssetIndex);
+
+                //Load the persisted token index. Older saved data did not contain it, so build it
+                //once as a migration and persist the upgraded format.
+                TokenToAssetIndex = new();
+                bool tokenIndexNeedsMigration = !savedData.HasTokenIndex;
+                if (!tokenIndexNeedsMigration)
+                {
+                    foreach (var kvp in savedData.tokenToAssetIndex)
+                        TokenToAssetIndex[kvp.Key] = new HashSet<string>(kvp.Value);
+                }
+
                 //Build data list
                 BuildPrefabDataList();
+
+                if (tokenIndexNeedsMigration)
+                    RebuildTokenIndex();
 
                 IsIndexed = true;
                 LastIndexTime = savedData.LastIndexBuildTime;
                 m_LastIndexPath = savedData.indexPath;
+
+                if (tokenIndexNeedsMigration)
+                    SaveIndexData();
             }
         }
 
@@ -161,8 +189,8 @@ namespace Farbod.Prefabbricato.Backend
             //Build index : Label -> asset
             LabelToAssetIndex = ReverseIndex(AssetToLabelIndex);
 
-
             BuildPrefabDataList();
+            RebuildTokenIndex();
 
             //Results
             IsIndexed = true;
@@ -177,6 +205,8 @@ namespace Farbod.Prefabbricato.Backend
         private static void BuildPrefabDataList()
         {
             PrefabDataList.Clear();
+            GuidToPrefabData.Clear();
+
             foreach (var guid in AssetToLabelIndex.Keys)
             {
                 PrefabData data = new(guid, AssetToLabelIndex[guid].ToList());
@@ -184,6 +214,7 @@ namespace Farbod.Prefabbricato.Backend
                     continue; //Stale/broken GUID, skip rather than crash
 
                 PrefabDataList.Add(data);
+                GuidToPrefabData[guid] = data;
             }
         }
 
@@ -202,10 +233,22 @@ namespace Farbod.Prefabbricato.Backend
         }
 
         internal static PrefabData FindByGuid(string guid) =>
-            PrefabDataList.FirstOrDefault(d => d.guid == guid);
+            string.IsNullOrEmpty(guid) ? null :
+            (GuidToPrefabData.TryGetValue(guid, out PrefabData data) ? data : null);
 
-        internal static string FindGuidByPath(string assetPath) =>
-            PrefabDataList.FirstOrDefault(d => d.assetPath == assetPath)?.guid;
+        internal static string FindGuidByPath(string assetPath)
+        {
+            if (string.IsNullOrEmpty(assetPath))
+                return null;
+
+            foreach (PrefabData data in PrefabDataList)
+            {
+                if (data.assetPath == assetPath)
+                    return data.guid;
+            }
+
+            return null;
+        }
 
         /// <summary>
         /// Adds a brand-new asset to the index, or, if it's already indexed, refreshes its labels
@@ -231,7 +274,9 @@ namespace Farbod.Prefabbricato.Backend
                 foreach (string label in newLabels)
                     AddToLabelIndex(label, guid);
 
+                AddToTokenIndex(data.name, guid);
                 PrefabDataList.Add(data);
+                GuidToPrefabData[guid] = data;
 
                 onAssetAdded?.Invoke(data);
                 return true;
@@ -278,11 +323,18 @@ namespace Farbod.Prefabbricato.Backend
             foreach (string label in labels)
                 RemoveFromLabelIndex(label, guid);
 
-            AssetToLabelIndex.Remove(guid);
-
             PrefabData removed = FindByGuid(guid);
             if (removed != null)
+                RemoveFromTokenIndex(removed.name, guid);
+
+            AssetToLabelIndex.Remove(guid);
+
+
+            if (removed != null)
+            {
                 PrefabDataList.Remove(removed);
+                GuidToPrefabData.Remove(guid);
+            }
 
             onAssetRemoved?.Invoke(removed);
             return true;
@@ -301,7 +353,15 @@ namespace Farbod.Prefabbricato.Backend
             if (data == null)
                 return false; //Not indexed, nothing to update
 
+            string oldName = data.name;
             data.UpdatePath(newPath);
+
+            if (!string.Equals(oldName, data.name, StringComparison.Ordinal))
+            {
+                RemoveFromTokenIndex(oldName, guid);
+                AddToTokenIndex(data.name, guid);
+            }
+
             onAssetMoved?.Invoke(data);
             return true;
         }
@@ -329,6 +389,81 @@ namespace Farbod.Prefabbricato.Backend
             set.Add(guid);
         }
 
+        private static void AddToTokenIndex(string name, string guid)
+        {
+            foreach (string token in TokenizeName(name))
+            {
+                if (!TokenToAssetIndex.TryGetValue(token, out HashSet<string> set))
+                {
+                    set = new HashSet<string>();
+                    TokenToAssetIndex[token] = set;
+                }
+
+                set.Add(guid);
+            }
+        }
+
+        private static void RemoveFromTokenIndex(string name, string guid)
+        {
+            foreach (string token in TokenizeName(name))
+            {
+                if (!TokenToAssetIndex.TryGetValue(token, out HashSet<string> set))
+                    continue;
+
+                set.Remove(guid);
+                if (set.Count == 0)
+                    TokenToAssetIndex.Remove(token);
+            }
+        }
+
+        private static void RebuildTokenIndex()
+        {
+            TokenToAssetIndex.Clear();
+
+            foreach (PrefabData data in PrefabDataList)
+            {
+                if (data == null || string.IsNullOrEmpty(data.name))
+                    continue;
+
+                AddToTokenIndex(data.name, data.guid);
+            }
+        }
+
+        internal static string NormalizeSearchToken(string token) =>
+            token?.Trim().ToLowerInvariant();
+
+        internal static IEnumerable<string> TokenizeName(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                yield break;
+
+            int start = -1;
+
+            for (int i = 0; i <= name.Length; i++)
+            {
+                bool separator = i == name.Length ||
+                                 name[i] == ' ' ||
+                                 name[i] == '\t' ||
+                                 name[i] == '\r' ||
+                                 name[i] == '\n' ||
+                                 name[i] == '-' ||
+                                 name[i] == '_';
+
+                if (!separator)
+                {
+                    if (start < 0)
+                        start = i;
+                    continue;
+                }
+
+                if (start >= 0)
+                {
+                    yield return name.Substring(start, i - start).ToLowerInvariant();
+                    start = -1;
+                }
+            }
+        }
+
         private static void RemoveFromLabelIndex(string label, string guid)
         {
             if (!LabelToAssetIndex.TryGetValue(label, out HashSet<string> set))
@@ -348,12 +483,18 @@ namespace Farbod.Prefabbricato.Backend
                 return;
 
             Dictionary<string, List<string>> labelAssetIndex = new();
-            foreach (string label in LabelToAssetIndex.Keys.ToArray())
-            {
+            foreach (string label in LabelToAssetIndex.Keys)
                 labelAssetIndex[label] = LabelToAssetIndex[label].ToList();
-            }
 
-            IndexSavedDataManager.IndexData data = new(labelAssetIndex, LastIndexTime, m_LastIndexPath);
+            Dictionary<string, List<string>> tokenAssetIndex = new();
+            foreach (string token in TokenToAssetIndex.Keys)
+                tokenAssetIndex[token] = TokenToAssetIndex[token].ToList();
+
+            IndexSavedDataManager.IndexData data = new(
+                labelAssetIndex,
+                tokenAssetIndex,
+                LastIndexTime,
+                m_LastIndexPath);
             IndexSavedDataManager.SaveIndexData(data);
         }
         private static Dictionary<T2, HashSet<T1>> ReverseIndex<T1, T2>(Dictionary<T1, HashSet<T2>> index)
@@ -394,7 +535,9 @@ namespace Farbod.Prefabbricato.Backend
             LastIndexTime = default;
             LabelToAssetIndex.Clear();
             AssetToLabelIndex.Clear();
+            TokenToAssetIndex.Clear();
             PrefabDataList.Clear();
+            GuidToPrefabData.Clear();
             IndexSavedDataManager.ClearIndexData();
 
             onIndexUpdate?.Invoke();

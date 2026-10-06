@@ -281,23 +281,23 @@ namespace Farbod.Prefabbricato.Backend
             CopyLabelsToClipboard(labels);
         }
 
-        private const string CopiedLabelsPrefix = "Labels: ";
+
         public static void CopyLabelsToClipboard(IEnumerable<string> labels)
         {
-            string json = CopiedLabelsPrefix + "\n" + string.Join("\n", labels.Select(s => "-" + s));
-            EditorGUIUtility.systemCopyBuffer = json;
+            string formatted = string.Join("\n", labels.Select(s => "-" + s));
+            EditorGUIUtility.systemCopyBuffer = formatted;
         }
         public static bool TryParseLabelsFromClipboard(out string[] labels)
         {
             labels = null;
             string clipboard = EditorGUIUtility.systemCopyBuffer;
 
-            if (string.IsNullOrEmpty(clipboard) || !clipboard.StartsWith(CopiedLabelsPrefix) || !clipboard.Contains("-"))
+            if (string.IsNullOrEmpty(clipboard) || !clipboard.Contains("-"))
                 return false;
 
             try
             {
-                string rawList = clipboard.Substring(CopiedLabelsPrefix.Length).Trim();
+                string rawList = clipboard.Trim();
                 string[] split = rawList.Split("-").Select(s => s.Trim()).Where(s => !string.IsNullOrWhiteSpace(s)).ToArray();
 
                 labels = split;

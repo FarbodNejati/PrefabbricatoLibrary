@@ -141,7 +141,7 @@ namespace Farbod.Prefabbricato
 #endif
             m_AddLabelField.AddToClassList(m_LabelFieldUssClassName);
             //Add tag from field when field is submitted
-            m_AddLabelField.RegisterCallback<KeyDownEvent>(evt => CatchFieldSubmit(evt, AddLabelFromField), TrickleDown.TrickleDown);
+            m_AddLabelField.RegisterFieldSubmitCallback(AddLabelFromField);
             info.Add(m_AddLabelField);
 
             //Add Label Button

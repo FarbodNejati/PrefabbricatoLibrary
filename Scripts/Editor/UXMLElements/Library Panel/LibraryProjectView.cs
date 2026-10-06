@@ -37,7 +37,8 @@ namespace Farbod.Prefabbricato
         /// The argument is the folder's path relative to the project root
         /// (e.g. "Assets/Art/Textures"), using forward slashes.
         /// </summary>
-        public event Action<string> onFolderDoubleClicked;
+        public event Action<string> OpenFolder;
+        public event Action<string> OpenFolderInNewTab;
 
         private readonly UnityEngine.UIElements.TreeView _treeView;
         private readonly bool _allowFileActions;
@@ -349,7 +350,7 @@ namespace Farbod.Prefabbricato
             if (row.Q<TextField>() != null) return; // ignore while a rename/create field is active
             if (row.userData is not RowState state || state.Entry.IsPendingCreate) return;
 
-            onFolderDoubleClicked?.Invoke(state.Entry.RelativePath);
+            OpenFolder?.Invoke(state.Entry.RelativePath);
             evt.StopPropagation();
         }
 
@@ -397,6 +398,7 @@ namespace Farbod.Prefabbricato
 
             var entry = state.Entry;
 
+            evt.menu.AppendAction("Create Folder", _ => BeginCreateFolder(row));
             if (_allowFileActions)
             {
                 evt.menu.AppendAction("Create Folder", _ => BeginCreateFolder(row));
@@ -404,6 +406,11 @@ namespace Farbod.Prefabbricato
                 evt.menu.AppendAction("Rename", _ => BeginRename(row));
                 evt.menu.AppendSeparator();
             }
+
+            if (OpenFolder != null)
+                evt.menu.AppendAction("Open", _ => OpenFolder.Invoke(entry.RelativePath));
+            if (OpenFolderInNewTab != null)
+                evt.menu.AppendAction("Open In New Tab", _ => OpenFolderInNewTab.Invoke(entry.RelativePath));
 
             // Always available, regardless of allowFileActions.
             evt.menu.AppendAction("Show In Project", _ => PathUtilities.PingAssetInProjectWindow(entry.RelativePath));

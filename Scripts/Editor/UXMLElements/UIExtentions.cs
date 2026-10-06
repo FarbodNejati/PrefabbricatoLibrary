@@ -6,8 +6,38 @@ using UnityEngine.UIElements;
 
 namespace Farbod.Prefabbricato
 {
-    public static class UIExtensions
+    internal static class UIExtensions
     {
+        public static void RegisterFieldSubmitCallback(this TextField self, Action callback)
+        {
+            self.RegisterCallback<KeyDownEvent>(evt => CatchFieldSubmit(self, evt, callback), TrickleDown.TrickleDown);
+        }
+        public static void RegisterFieldSubmitCallback(this ToolbarSearchField self, Action callback)
+        {
+            self.RegisterCallback<KeyDownEvent>(evt => CatchFieldSubmit(self, evt, callback), TrickleDown.TrickleDown);
+        }
+        public static void RegisterFieldSubmitCallback(this ToolbarPopupSearchField self, Action callback)
+        {
+            self.RegisterCallback<KeyDownEvent>(evt => CatchFieldSubmit(self, evt, callback), TrickleDown.TrickleDown);
+        }
+        private static void CatchFieldSubmit(VisualElement ve,KeyDownEvent evt, Action callback)
+        {
+            // Check if the pressed key is the Enter key (Return key)
+            if (evt.keyCode == KeyCode.Return || evt.keyCode == KeyCode.KeypadEnter || evt.character == '\n')
+            {
+                callback.Invoke();
+
+#if UNITY_2023_2_OR_NEWER
+                ve.focusController.IgnoreEvent(evt);
+#else
+                evt.PreventDefault();
+#endif
+                evt.StopImmediatePropagation();
+            }
+
+
+        }
+
         public static UnityEngine.UIElements.Background GetEditorIcon(string name)
         {
             Texture2D icon = (Texture2D)EditorGUIUtility.IconContent(name).image;

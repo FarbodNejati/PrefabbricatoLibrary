@@ -77,9 +77,13 @@ namespace Farbod.Prefabbricato
 
 
             m_Root.AddToClassList(ussClassName);
-            PopulateWindowContent(m_Root);
-            RegisterCallbacks();
 
+            VisualElement contentContainer = new();
+            m_Root.Add(contentContainer);
+            PopulateWindowContent(contentContainer);
+
+
+            RegisterCallbacks();
             FetchProjectLabels();
 
             //m_Root.schedule.Execute(() =>
@@ -94,6 +98,10 @@ namespace Farbod.Prefabbricato
 
         private void PopulateWindowContent(VisualElement content)
         {
+            //content.style.alignSelf = Align.Center;
+            //content.style.maxWidth = WINDOW_MAX_SIZE.x;
+            content.style.flexGrow = 1;
+
             #region Library Path
             m_PathField = new TextField("Library Path");
             //Set initial value

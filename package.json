@@ -1,0 +1,9 @@
+{
+  "name": "com.farbod-nejati.prefabbricato",
+  "version": "1.0.0",
+  "displayName": "Prefabbricato Library",
+  "description": "An Editor Window for easily organizing your Prefabs an assist Level Design.",
+  "author": "Farbod Nejati",
+  "unity": "2022.3",
+  "dependencies": {},
+}

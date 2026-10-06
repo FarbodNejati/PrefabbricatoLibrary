@@ -25,8 +25,6 @@ namespace Farbod.Prefabbricato
         //private readonly static string m_LabelNameUssClassName = m_AssetLabelUssClassName + "_name";
         private readonly static string m_LabelCounterUssClassName = m_AssetLabelUssClassName+"_counter";
 
-        private static Background m_LabelIconImage = UIExtensions.GetEditorIcon("FilterByLabel");
-
 
         private ListView m_List;
         private ToolbarSearchField m_SearchField;
@@ -34,7 +32,7 @@ namespace Farbod.Prefabbricato
         private List<KeyValuePair<string, Color?>> m_ShownLabelEntries;
 
 
-        internal event Action<string> onLabelClicked;
+        internal event Action<string> OpenLabel;
         internal event Action<string, ContextualMenuPopulateEvent> onLabelContextMenu;
         public LibraryLabelsView()
         {
@@ -74,8 +72,6 @@ namespace Farbod.Prefabbricato
             //Click event
             entry.RegisterCallback<ClickEvent>(evt =>
             {
-                //User data should hold the index of the item calling this event.
-
                 //Check if user data is integer
                 if (container.userData is not int idx) return;
                 //Check if index is in range
@@ -84,7 +80,8 @@ namespace Farbod.Prefabbricato
 
                 //Get label name by index
                 var labelName = m_ShownLabelEntries[idx].Key;
-                onLabelClicked?.Invoke(labelName);
+                if (evt.clickCount > 1)
+                    OpenLabel?.Invoke(labelName);
             });
             //Context menu manipulator
             entry.AddManipulator(new ContextualMenuManipulator(e =>

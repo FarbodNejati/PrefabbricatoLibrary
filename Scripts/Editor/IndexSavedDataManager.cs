@@ -29,19 +29,38 @@ namespace Farbod.Prefabbricato.Backend
                 public List<string> guids;
             }
 
+            [System.Serializable]
+            public class TokenToAssetIndexEntry
+            {
+                public string token;
+                public List<string> guids;
+            }
+
             //Saved fields
+            [SerializeField]
+            private int schemaVersion = 1;
+
             [SerializeField]
             public string indexPath;
 
             [SerializeField]
             private string lastIndexBuildTime;
 
-            // Serialized field for JSON
+            // Serialized fields for JSON
             public List<LabelToAssetIndexEntry> entries = new();
+            public List<TokenToAssetIndexEntry> tokenEntries = new();
 
-            // Runtime dictionary for fast lookups
+            // Runtime dictionaries for fast lookups
             [NonSerialized]
             public Dictionary<string, List<string>> labelToAssetIndex = new();
+
+            [NonSerialized]
+            public Dictionary<string, List<string>> tokenToAssetIndex = new();
+
+            /// <summary>
+            /// False for index files created before token indexing was persisted.
+            /// </summary>
+            public bool HasTokenIndex => schemaVersion >= 1;
 
             //Date time
             private static readonly IFormatProvider dateFormatProvider = CultureInfo.InvariantCulture;
@@ -63,9 +82,15 @@ namespace Farbod.Prefabbricato.Backend
                 }
             }
 
-            public IndexData(Dictionary<string, List<string>> labelToAssetIndex, DateTime lastIndexBuildTime, string indexPath)
+            public IndexData(
+                Dictionary<string, List<string>> labelToAssetIndex,
+                Dictionary<string, List<string>> tokenToAssetIndex,
+                DateTime lastIndexBuildTime,
+                string indexPath)
             {
+                schemaVersion = 1;
                 this.labelToAssetIndex = labelToAssetIndex;
+                this.tokenToAssetIndex = tokenToAssetIndex;
                 LastIndexBuildTime = lastIndexBuildTime;
                 this.indexPath = indexPath;
             }
@@ -78,20 +103,34 @@ namespace Farbod.Prefabbricato.Backend
                 {
                     entries.Add(new LabelToAssetIndexEntry { label = kvp.Key, guids = kvp.Value });
                 }
+
+                tokenEntries.Clear();
+                foreach (var kvp in tokenToAssetIndex)
+                {
+                    tokenEntries.Add(new TokenToAssetIndexEntry { token = kvp.Key, guids = kvp.Value });
+                }
             }
 
             // Convert back to dictionary after deserialization
             public void PrepareForRuntime()
             {
                 labelToAssetIndex = new();
-                foreach (var entry in entries)
+                foreach (var entry in entries ?? new List<LabelToAssetIndexEntry>())
                 {
-                    labelToAssetIndex[entry.label] = entry.guids;
+                    if (!string.IsNullOrEmpty(entry.label))
+                        labelToAssetIndex[entry.label] = entry.guids ?? new List<string>();
+                }
+
+                tokenToAssetIndex = new();
+                foreach (var entry in tokenEntries ?? new List<TokenToAssetIndexEntry>())
+                {
+                    if (!string.IsNullOrEmpty(entry.token))
+                        tokenToAssetIndex[entry.token] = entry.guids ?? new List<string>();
                 }
             }
 
 
-            
+
         }
         public static void SaveIndexData(IndexData data)
         {
@@ -99,7 +138,6 @@ namespace Farbod.Prefabbricato.Backend
 
             var json = JsonUtility.ToJson(data, true);
             File.WriteAllText(INDEX_DATA_PATH, json);
-            AssetDatabase.Refresh();
         }
         public static IndexData LoadIndexData()
         {

@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Reflection.Emit;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -43,7 +44,11 @@ namespace Farbod.Prefabbricato
         internal event Action<PrefabsTab> activeTabChanged;
         internal event Action<IReadOnlyList<PrefabData>> selectionChanged;
         internal event Action<DropdownMenu, IReadOnlyList<PrefabData>> assetsContextMenu;
-
+        internal int activeTabIndex
+        {
+            get => m_TabView.selectedTabIndex;
+            set => m_TabView.selectedTabIndex = value;
+        }
         public PrefabPanelView()
         {
             //Load default stylesheet
@@ -53,7 +58,7 @@ namespace Farbod.Prefabbricato
 
             PopulateElement();
 
-            AddTab();
+            CreateTab();
         }
 
         private void PopulateElement()
@@ -74,12 +79,12 @@ namespace Farbod.Prefabbricato
                 button.AddToClassList("tab-header-controls");
             });
             m_TabView.AddToClassList(tabViewUssClassName);
-            m_TabView.activeTabChanged += ActiveTabChanged;
+            m_TabView.activeTabChanged += OnActiveTabChanged;
             m_TabView.contentContainer.style.flexGrow = 1;
 
 
             //Add tab button
-            var addButton = new Button(AddTab) {
+            var addButton = new Button(()=>CreateTab()) {
                 name = addTabButtonUssClassName,
                 iconImage = UIExtensions.GetEditorIcon("CreateAddNew@2x"),
                 tooltip = "New Tab",
@@ -112,7 +117,7 @@ namespace Farbod.Prefabbricato
             //m_TabView.contentViewport
             hierarchy.Add(m_TabView);
         }
-        private void AddTab()
+        internal PrefabsTab CreateTab(Query initialQuery = null)
         {
             Tab tab = new Tab() {
                 closeable = true,
@@ -123,7 +128,7 @@ namespace Farbod.Prefabbricato
                 }
             };
             tab.contentContainer.style.flexGrow = 1;
-            PrefabsTab prefabsTab = new PrefabsTab(tab, null);
+            PrefabsTab prefabsTab = new PrefabsTab(tab, initialQuery);
             prefabsTab.style.flexGrow = 1;
             
 
@@ -160,22 +165,49 @@ namespace Farbod.Prefabbricato
                     BuildTabHeaderContextMenu(e.menu, tab);
             }));
 
-            prefabsTab.assetsContextMenu += (e, a) =>
+            prefabsTab.onAssetsContextMenu += (e, a) =>
             {
                 assetsContextMenu?.Invoke(e.menu, a);
             };
 
             allTabs.Add(prefabsTab);
-            tab.closed += (t) => allTabs.Remove(prefabsTab);
+            tab.closed += t => OnTabRemoved(t, prefabsTab);
             tab.Add(prefabsTab);
             m_TabView.Add(tab);
 
             int tabCount = m_TabView.childCount;
 
             m_TabView.selectedTabIndex = tabCount-1;
-            ActiveTabChanged(null, tab);
+            OnActiveTabChanged(null, tab);
+            return prefabsTab;
+        }
+        private void OnActiveTabChanged(Tab oldTab, Tab newTab)
+        {
+            if (activeTab != null)
+                activeTab.onSelectionChanged -= selectionChanged;
+            activeTab = newTab.Q<PrefabsTab>();
+
+            activeTabChanged?.Invoke(activeTab);
+            activeTab.onSelectionChanged += i => {
+                selectionChanged?.Invoke(i);
+            };
         }
 
+        private void OnTabRemoved(Tab tab, PrefabsTab prefabTab)
+        {
+            allTabs.Remove(prefabTab);
+        }
+
+        /// <summary>
+        /// Returns the active tab, or creates a new one if needed.
+        /// </summary>
+        internal PrefabsTab ActiveOrNewTab()
+        {
+            if(m_TabView.activeTab == null || activeTab == null)
+                CreateTab();
+
+            return activeTab;
+        }
         private void BuildTabHeaderContextMenu(DropdownMenu menu, Tab tab)
         {
             menu.AppendAction("Close", e => { tab.RemoveFromHierarchy(); });
@@ -200,16 +232,11 @@ namespace Farbod.Prefabbricato
             });
         }
 
-        private void ActiveTabChanged(Tab oldTab, Tab newTab)
+        
+        internal void ClearTabs()
         {
-            if(activeTab!=null)
-                activeTab.selectionChanged -= selectionChanged;
-            activeTab = newTab.Q<PrefabsTab>();
-
-            activeTabChanged?.Invoke(activeTab);
-            activeTab.selectionChanged += i=> {
-                selectionChanged?.Invoke(i);
-            };
+            m_TabView.Clear();
+            allTabs.Clear();
         }
     }
 }

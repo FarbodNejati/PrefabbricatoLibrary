@@ -37,6 +37,13 @@ namespace Farbod.Prefabbricato.Backend
         private List<UserLabelData> userLabelData = new();
 
         /// <summary>
+        /// persistent tab data for session changes and domain reloads.
+        /// </summary>
+        [SerializeField]
+        internal List<SerializableQueryData> savedTabData = new();
+        [SerializeField]
+        internal int activeTabIndex = 0;
+        /// <summary>
         /// Is the library directory set up, and valid?
         /// </summary>
         internal static bool IsLibrarySetUp()
