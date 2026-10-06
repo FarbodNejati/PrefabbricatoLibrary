@@ -24,9 +24,9 @@ You can override the color of Asset Labels by right clicking on them and clickin
 ---
 
 ToDo:
-- [] View Modes
-- [] Sort Modes
-- [] Merge Settings and Main window
+- [ ] View Modes
+- [ ] Sort Modes
+- [ ] Merge Settings and Main window
 
 * Feel free to contribute by committing a pull request.
 
