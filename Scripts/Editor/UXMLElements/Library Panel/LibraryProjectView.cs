@@ -97,12 +97,14 @@ namespace Farbod.Prefabbricato
         /// Rebuilds the tree using the given project-relative root path
         /// (e.g. "Assets" or "Assets/MyFolder").
         /// </summary>
-        public void SetRoot(string rootRelativePath)
+        internal void SetRoot(string rootRelativePath)
         {
+            if (!IsAssetDatabasePath(rootRelativePath))
+            {
+                return;
+            }
             _rootRelativePath = rootRelativePath;
-            _nextId = 0;
-
-            WarnIfRootIncompatibleWithFileActions(rootRelativePath);
+            
 
             var items = BuildTree(rootRelativePath);
             _treeView.SetRootItems(items);
@@ -110,7 +112,7 @@ namespace Farbod.Prefabbricato
         }
         /// <summary>Forces a full rescan of the current root and rebuilds the tree,
         /// preserving which folders were expanded beforehand.</summary>
-        public void Refresh(string newPath = null)
+        internal void Refresh(string newPath = null)
         {
             string path = !string.IsNullOrEmpty(newPath) ? newPath : _rootRelativePath;
             if (string.IsNullOrEmpty(path)) return;
@@ -166,14 +168,19 @@ namespace Farbod.Prefabbricato
             var result = new List<TreeViewItemData<FolderEntry>>();
 
             string absoluteRoot = ToAbsolutePath(rootRelativePath);
+
             if (!Directory.Exists(absoluteRoot))
             {
                 Debug.LogWarning($"[ProjectTreeView] Root folder does not exist: {absoluteRoot}");
                 return result;
             }
 
+            _nextId = 0;
             foreach (var folderPath in ScanFolders(absoluteRoot))
             {
+                if (!IsAssetDatabasePath(ToRelativePath(folderPath)))
+                    continue;
+
                 result.Add(BuildItemRecursive(folderPath));
             }
 
@@ -186,7 +193,7 @@ namespace Farbod.Prefabbricato
         /// (e.g. to add filtering, ignore hidden/meta folders, sort differently, etc.)
         /// without touching the rest of the tree-building logic.
         /// </summary>
-        protected virtual IEnumerable<string> ScanFolders(string absoluteDirectoryPath)
+        private IEnumerable<string> ScanFolders(string absoluteDirectoryPath)
         {
             return Directory.GetDirectories(absoluteDirectoryPath)
                 .Where(p => !IsHiddenFolder(p))
@@ -198,7 +205,7 @@ namespace Farbod.Prefabbricato
         /// Returns true for folders that should be skipped entirely, such as
         /// ".git", ".vs", or any folder with the OS "hidden" attribute set.
         /// </summary>
-        protected virtual bool IsHiddenFolder(string absoluteFolderPath)
+        private bool IsHiddenFolder(string absoluteFolderPath)
         {
             string name = Path.GetFileName(absoluteFolderPath);
             if (name.StartsWith(".", StringComparison.Ordinal))
@@ -223,6 +230,9 @@ namespace Farbod.Prefabbricato
             var children = new List<TreeViewItemData<FolderEntry>>();
             foreach (var childPath in ScanFolders(absoluteFolderPath))
             {
+                if (!IsAssetDatabasePath(ToRelativePath(childPath)))
+                    continue;
+
                 children.Add(BuildItemRecursive(childPath));
             }
 
@@ -237,7 +247,7 @@ namespace Farbod.Prefabbricato
         /// later (e.g. check for any asset at all) without touching the rest of
         /// the tree-building or icon logic.
         /// </summary>
-        protected virtual bool IsFolderEmpty(string relativePath)
+        private bool IsFolderEmpty(string relativePath)
         {
             //Check for subfolders
             string[] folders = AssetDatabase.GetSubFolders(relativePath);
@@ -668,17 +678,7 @@ namespace Farbod.Prefabbricato
 
         private static bool IsAssetDatabasePath(string relativePath) =>
             !string.IsNullOrEmpty(relativePath) &&
-            relativePath.StartsWith("Assets", StringComparison.OrdinalIgnoreCase);
-
-        private void WarnIfRootIncompatibleWithFileActions(string rootRelativePath)
-        {
-            if (_allowFileActions && !IsAssetDatabasePath(rootRelativePath))
-            {
-                Debug.LogWarning("[ProjectTreeView] allowFileActions is enabled, but the root path is not under " +
-                                 "'Assets' or 'Packages'. Rename/Create Folder/Delete use Unity's AssetDatabase, " +
-                                 "which only manages paths under those folders.");
-            }
-        }
+            relativePath.StartsWith("Assets", StringComparison.OrdinalIgnoreCase) && AssetDatabase.IsValidFolder(relativePath);
 
         private readonly struct FolderEntry
         {

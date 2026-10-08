@@ -9,7 +9,7 @@ namespace Farbod.Prefabbricato.Backend
     /// <summary>
     /// Project wide settings for the Prefabbricato library
     /// </summary>
-    [FilePath("Prefabbricato/Settings.json", FilePathAttribute.Location.ProjectFolder)]
+    [FilePath("Prefabbricato/Settings.yml", FilePathAttribute.Location.ProjectFolder)]
     public class PrefabbricatoSettings : ScriptableSingleton<PrefabbricatoSettings>
     {
         private const bool SAVE_AS_TEXT = true;
@@ -93,7 +93,7 @@ namespace Farbod.Prefabbricato.Backend
 
             //Finally, update path and save.
             instance.libraryPath = selectedPath;
-            instance.Save(SAVE_AS_TEXT);
+            instance.Save();
 
             //Notify other scripts.
             if (instance.libraryPath != oldPath)
@@ -147,7 +147,7 @@ namespace Farbod.Prefabbricato.Backend
             }
 
             //Finally save out file
-            Save(SAVE_AS_TEXT);
+            Save();
         }
 
         /// <summary>
@@ -168,6 +168,7 @@ namespace Farbod.Prefabbricato.Backend
             return condition;
         }
 
+        internal void Save() => Save(SAVE_AS_TEXT);
     }
     
 }
