@@ -4,9 +4,6 @@ This tool uses **Asset Labels** to tag Prefabs, helping you find the right Prop,
 
 <img width="760" alt="Library User Interface"  src="https://github.com/user-attachments/assets/ba39fd2d-566c-42bf-bae2-e03cf3f8c0ae" />
 
->[!WARNING]
->WORK IN PROGRESS. NOT FOR USE AT THE MOMENT.
-
 # Installation
 Install the latest release by opening the package  manager and installing by git url and entering the following:
 
@@ -25,6 +22,11 @@ Now select the path where you store your Prefabs, and start a scan.
 You can override the color of Asset Labels by right clicking on them and clicking `Edit Tag`
 
 ---
+
+ToDo:
+- [ ] View Modes
+- [ ] Sort Modes
+- [ ] Merge Settings and Main window
 
 * Feel free to contribute by committing a pull request.
 
